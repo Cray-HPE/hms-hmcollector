@@ -1,0 +1,55 @@
+# Copyright 2019-2020 Hewlett Packard Enterprise Development LP
+
+# v1.1.0 of Confluent Go Kafka requirest at least v1.1.0 of librdkafka.
+ARG LIBRDKAFKA_VER_MIN=1.1.0
+
+# Build base just has the packages installed we need.
+FROM dtr.dev.cray.com/baseos/golang:1.14-alpine3.12 AS build-base
+
+ARG LIBRDKAFKA_VER_MIN
+
+RUN set -ex \
+    && apk update \
+    && apk add --no-cache \
+        build-base \
+        "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
+        pkgconf
+
+# Base copies in the files we need to test/build.
+FROM build-base AS base
+
+# Copy all the necessary files to the image.
+COPY cmd        $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/cmd
+COPY internal   $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/internal
+COPY vendor     $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/vendor
+
+### Build Stage ###
+FROM base AS builder
+
+RUN set -ex \
+    && go build -v -o /usr/local/bin/kafka_tool stash.us.cray.com/HMS/hms-hmcollector/cmd/kafka_tool
+
+### Final Stage ###
+FROM dtr.dev.cray.com/baseos/alpine:3.12
+
+# Configure pip to use the DST PIP Mirror
+ENV PIP_TRUSTED_HOST dst.us.cray.com
+ENV PIP_INDEX_URL http://$PIP_TRUSTED_HOST/dstpiprepo/simple/
+
+STOPSIGNAL SIGKILL
+
+ARG LIBRDKAFKA_VER_MIN
+
+COPY --from=builder /usr/local/bin/kafka_tool /usr/local/bin
+
+COPY scripts/get_topics.py /
+
+RUN set -ex \
+    && apk update \
+    && apk add --no-cache \
+        "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
+        pkgconf \
+        curl \
+        python3 \
+        py3-pip \
+    && pip3 install kafka
