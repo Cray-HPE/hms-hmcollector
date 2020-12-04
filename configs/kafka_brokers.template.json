@@ -1,0 +1,8 @@
+{
+  "BrokerAddress": "test:1234",
+  "TopicsToPublish": {
+    "bar": null,
+    "baz": null,
+    "foo": null
+  }
+}

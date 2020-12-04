@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cray-hms-hmcollector
+  labels:
+    app.kubernetes.io/name: cray-hms-hmcollector
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  annotations:
+    metallb.universe.tf/address-pool: hardware-management
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  loadBalancerIP: {{ .Values.hmcollector_external_ip }}
+  {{- end }}
+  ports:
+    - port: 80
+      targetPort: hmc-insecure
+      name: hmc-proxy-insecure
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: cray-hms-hmcollector
