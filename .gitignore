@@ -1,0 +1,7 @@
+.idea
+*.sqlite-shm
+scripts/create_subscriptions.sh
+scripts/delete_subscriptions.sh
+venv
+cmd/test
+configs/kafka_brokers.json

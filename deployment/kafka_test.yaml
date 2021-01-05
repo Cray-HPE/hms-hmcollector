@@ -1,0 +1,17 @@
+apiVersion: v1
+kind:       Pod
+metadata:
+  name:      kafka-debug
+  #namespace: services
+  annotations:
+    #sidecar.istio.io/inject: "false"
+    traffic.sidecar.istio.io/excludeOutboundPorts: "8082,9092,2181"
+spec:
+  containers:
+    - name:            kafka-test
+      image:           sms.local:5000/hms/kafka-test
+      command:
+        - sleep
+        - "3600"
+      imagePullPolicy: Always
+  restartPolicy: Always

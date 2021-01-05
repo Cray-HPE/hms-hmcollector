@@ -1,0 +1,37 @@
+# This will get overwritten by the correct Ansible value. See the hms-install repo for more details.
+hmcollector_external_ip: "10.4.100.1"
+
+collectorConfig:
+  logLevel: "INFO"
+
+  pollingEnabled: "true"
+  pollingInterval: "30"
+
+  redfishSubscribeEnabled: "true"
+  redfishStreamingEnabled: "true"
+  restEnabled: "true"
+
+  hsmRefreshInterval: "30"
+
+  vaultEnabled: "true"
+
+imagesHost: "dtr.dev.cray.com"
+gateway: hmn-gateway
+service:
+  type: ClusterIP
+kafkaBrokers:
+  - BrokerAddress: cluster-kafka-bootstrap.sma.svc.cluster.local:9092
+    TopicsToPublish:
+      - cray-telemetry-temperature
+      - cray-telemetry-voltage
+      - cray-telemetry-power
+      - cray-telemetry-energy
+      - cray-telemetry-fan
+      - cray-telemetry-pressure
+      - cray-fabric-telemetry
+      - cray-fabric-perf-telemetry
+      - cray-fabric-crit-telemetry
+      - cray-dmtf-resource-event
+  - BrokerAddress: cray-shared-kafka-kafka-bootstrap.services.svc.cluster.local:9092
+    TopicsToPublish:
+      - cray-dmtf-resource-event

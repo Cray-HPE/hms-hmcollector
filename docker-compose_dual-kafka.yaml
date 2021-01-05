@@ -1,0 +1,55 @@
+version: '3'
+services:
+  zookeeper1:
+    image: dtr.dev.cray.com/confluentinc/cp-zookeeper:5.4.0
+    hostname: zookeeper1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka1:
+    image: dtr.dev.cray.com/confluentinc/cp-kafka:5.4.0
+    hostname: kafka1
+    depends_on:
+      - zookeeper1
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper1:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  zookeeper2:
+    image: dtr.dev.cray.com/confluentinc/cp-zookeeper:5.4.0
+    hostname: zookeeper2
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka2:
+    image: dtr.dev.cray.com/confluentinc/cp-kafka:5.4.0
+    hostname: kafka2
+    depends_on:
+      - zookeeper2
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper2:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  hms-hmcollector:
+    build: .
+    environment:
+      - LOG_LEVEL=TRACE
+      - POLLING_ENABLED=false
+      - RF_SUBSCRIBE_ENABLED=false
+      - REST_PORT=80
+      - VAULT_ENABLED=false
+    depends_on:
+      - kafka1
+      - kafka2
+    ports:
+      - "80:80"
+    volumes:
+    - ./configs/kafka_brokers-local_dual.json:/configs/kafka_brokers.json
