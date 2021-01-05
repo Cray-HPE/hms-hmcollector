@@ -1,0 +1,5 @@
+apiVersion: v1
+description: "Kubernetes resources for cray-hms-hmcollector"
+name: "cray-hms-hmcollector"
+home: "HMS/cray-hms-hmcollector"
+version: 2.8.9

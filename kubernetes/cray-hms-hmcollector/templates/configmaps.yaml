@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hms-hmcollector-kafka-brokers
+  namespace: services
+data:
+  kafka_brokers.json: |-
+{{ tpl (.Files.Get "files/kafka_brokers.json") . | indent 4 }}
+

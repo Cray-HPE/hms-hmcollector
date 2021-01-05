@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+    app.kubernetes.io/instance: cray-hms-hmcollector
+  name: cray-hms-hmcollector
+spec:
+  gateways:
+  - {{ .Values.gateway }}
+  hosts:
+  - '*'
+  http:
+  - route:
+    - destination:
+        host: cray-hms-hmcollector
+        port:
+          number: 80

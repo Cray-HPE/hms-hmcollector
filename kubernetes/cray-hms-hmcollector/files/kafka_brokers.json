@@ -1,0 +1,14 @@
+[
+{{- $kafkaBrokers := .Values.kafkaBrokers -}}
+{{- range $i, $kafkaBroker := $kafkaBrokers }}
+  {
+    "BrokerAddress": "{{ .BrokerAddress }}",
+    "TopicsToPublish": {
+      {{- $topicsToPublish := .TopicsToPublish -}}
+      {{- range $ii, $element := $topicsToPublish }}
+      "{{ . }}": null{{ if not (eq $ii (sub (len $topicsToPublish) 1)) }},{{ end }}
+      {{- end }}
+    }
+  }{{ if not (eq $i (sub (len $kafkaBrokers) 1)) }},{{ end }}
+{{- end }}
+]
