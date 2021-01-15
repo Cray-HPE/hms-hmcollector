@@ -24,6 +24,14 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+
+## [2.9.0] - 2021-01-14
+
+### Changed
+
+- Updated license file.
+
+
 ## [2.8.9] - 2020-12-16
 
 - CASMHMS-4241 - Stop collecting/polling River env telemetry if SMA is not available.
