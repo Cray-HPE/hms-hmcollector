@@ -11,9 +11,9 @@ require (
 	go.uber.org/zap v1.15.0
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.1.0
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
-	stash.us.cray.com/HMS/hms-certs v1.0.6
-	stash.us.cray.com/HMS/hms-compcredentials v1.7.0
-	stash.us.cray.com/HMS/hms-go-http-lib v1.2.2
-	stash.us.cray.com/HMS/hms-securestorage v1.8.0
-	stash.us.cray.com/HMS/hms-smd v1.25.1
+	stash.us.cray.com/HMS/hms-certs v1.2.0
+	stash.us.cray.com/HMS/hms-compcredentials v1.10.0
+	stash.us.cray.com/HMS/hms-go-http-lib v1.4.0
+	stash.us.cray.com/HMS/hms-securestorage v1.11.0
+	stash.us.cray.com/HMS/hms-smd v1.28.0
 )
