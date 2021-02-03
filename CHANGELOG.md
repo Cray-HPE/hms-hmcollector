@@ -24,6 +24,11 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.10.0] - 2021-02-03
+
+### Changed
+
+- Update Copyright/License and re-vendor go packages
 
 ## [2.9.0] - 2021-01-14
 
