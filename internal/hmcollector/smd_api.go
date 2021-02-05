@@ -25,20 +25,26 @@ package hmcollector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
-	hmshttp "stash.us.cray.com/HMS/hms-go-http-lib"
+	"io/ioutil"
+	"net/http"
 	"stash.us.cray.com/HMS/hms-smd/pkg/redfish"
+	"stash.us.cray.com/HMS/hms-certs/pkg/hms_certs"
 )
 
-func GetEndpointList(httpClient *retryablehttp.Client, gatewayUrl string) ([]rf.RedfishEPDescription, error) {
+func GetEndpointList(httpClient *hms_certs.HTTPClientPair, gatewayUrl string) ([]rf.RedfishEPDescription, error) {
 	var RedfishEndpoints RedfishEndpoints
 
-	request := hmshttp.NewHTTPRequest(gatewayUrl + "/hsm/v1/Inventory/RedfishEndpoints")
-	request.Client = httpClient
-
-	payloadBytes, _, err := request.DoHTTPAction()
-	if err != nil {
-		return nil, fmt.Errorf("unable to do HTTP GET for RF endpoints: %s", err)
+	request,qerr := http.NewRequest("GET",gatewayUrl + "/hsm/v1/Inventory/RedfishEndpoints",nil)
+	if (qerr != nil) {
+		return nil,fmt.Errorf("Unable to create HTTP request: %v",qerr)
+	}
+	rsp,serr := httpClient.Do(request)
+	if (serr != nil) {
+		return nil, fmt.Errorf("Error in HTTP request: %v",serr)
+	}
+	payloadBytes, perr := ioutil.ReadAll(rsp.Body)
+	if (perr != nil) {
+		return nil, fmt.Errorf("unable to do HTTP GET for RF endpoints: %s", perr)
 	}
 
 	stringPayloadBytes := string(payloadBytes)
@@ -46,8 +52,7 @@ func GetEndpointList(httpClient *retryablehttp.Client, gatewayUrl string) ([]rf.
 		// If we've made it to here we have all we need, unmarshal.
 		jsonErr := json.Unmarshal(payloadBytes, &RedfishEndpoints)
 		if jsonErr != nil {
-			err = fmt.Errorf("unable to unmarshal payload: %s", jsonErr)
-			return nil, err
+			return nil, fmt.Errorf("unable to unmarshal payload: %s", jsonErr)
 		}
 	}
 
