@@ -24,7 +24,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -35,9 +34,6 @@ import (
 	"time"
 
 	"go.uber.org/zap/zapcore"
-	"stash.us.cray.com/HMS/hms-hmcollector/internal/http_logger"
-
-	"github.com/hashicorp/go-retryablehttp"
 	"github.com/namsral/flag"
 	"go.uber.org/zap"
 
@@ -45,6 +41,7 @@ import (
 	"stash.us.cray.com/HMS/hms-hmcollector/internal/river_collector"
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
 	"stash.us.cray.com/HMS/hms-certs/pkg/hms_certs"
+	"stash.us.cray.com/HMS/hms-base"
 )
 
 const NumWorkers = 30
@@ -88,6 +85,7 @@ var (
 	IgnoreProvidedTimestamp = flag.Bool("ignore_provided_timestamp", false,
 		"Should the collector disregard any provided timestamps and instead use a local value of NOW?")
 
+	serviceName string
 	kafkaBrokers []*hmcollector.KafkaBroker
 
 	Running = true
@@ -97,7 +95,7 @@ var (
 
 	ctx context.Context
 
-	httpClient *retryablehttp.Client
+	smdClient *hms_certs.HTTPClientPair
 	rfClient *hms_certs.HTTPClientPair
 	rfClientLock sync.RWMutex
 
@@ -126,7 +124,7 @@ type jsonPayload struct {
 func doUpdateHSMEndpoints() {
 	for Running {
 		// Get Redfish endpoints from HSM
-		newEndpoints, newEndpointsErr := hmcollector.GetEndpointList(httpClient, *smURL)
+		newEndpoints, newEndpointsErr := hmcollector.GetEndpointList(smdClient, *smURL)
 		if newEndpoints == nil || len(newEndpoints) == 0 || newEndpointsErr != nil {
 			// Ignore and retry on next interval.
 			logger.Warn("No endpoints retrieved from State Manager", zap.Error(newEndpointsErr))
@@ -253,7 +251,7 @@ func createRFClient() error {
 	} else {
 		logger.Info("Creating Redfish HTTP client without CA trust bundle.")
 	}
-	rfc,err := hms_certs.CreateHTTPClientPair(*caURI,*httpTimeout)
+	rfc,err := hms_certs.CreateRetryableHTTPClientPair(*caURI,*httpTimeout,4,10)
 	if (err != nil) {
 		return fmt.Errorf("ERROR: Can't create Redfish HTTP client: %v",err)
 	}
@@ -274,7 +272,17 @@ func caChangeCB(caBundle string) {
 
 
 func main() {
+	var err error
+
 	setupLogging()
+
+	serviceName,err = base.GetServiceInstanceName()
+	if (err != nil) {
+		serviceName = "HMCOLLECTOR"
+		logger.Error("Can't get service instance name, using ",
+				zap.String("",serviceName))
+	}
+	logger.Info("Service/Instance name:",zap.String("",serviceName))
 
 	// Parse the arguments.
 	flag.Parse()
@@ -284,15 +292,16 @@ func main() {
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithCancel(context.Background())
 
-	// For performance reasons we'll keep the client that was created for this base request and reuse it later.
-	httpClient = retryablehttp.NewClient()
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	httpClient.HTTPClient.Transport = transport
-
 	hms_certs.ConfigParams.LogInsecureFailover = *logInsecFailover
-	hms_certs.Init(nil)
+	hms_certs.InitInstance(nil,serviceName)
+
+	// For performance reasons we'll keep the client that was created for 
+	// this base request and reuse it later.
+
+	smdClient,err = hms_certs.CreateRetryableHTTPClientPair("",10,4,30)
+	if (err != nil) {
+		panic("Can't create insecure cert HTTP client!") //should never happen!
+	}
 
 	//Create a TLS-verified HTTP client for Redfish stuff.  Try for a while,
 	//fail over if CA-enabled transports can't be created.
@@ -333,10 +342,6 @@ func main() {
     } else {
        logger.Warn("No CA bundle URI specified, not watching for CA changes.")
     }
-
-	// Also, since we're using logger it make sense to set the logger to use the one we've already setup.
-	httpLogger := http_logger.NewHTTPLogger(logger)
-	httpClient.Logger = httpLogger
 
 	if *restEnabled {
 		// Only enable handling of the root URL if REST is "enabled".
@@ -445,7 +450,7 @@ func main() {
 	}()
 
 	// Cleanup any leftover connections...because Go.
-	httpClient.HTTPClient.CloseIdleConnections()
+	smdClient.CloseIdleConnections()
 	rfClient.CloseIdleConnections()
 
 	logger.Info("Exiting...")
