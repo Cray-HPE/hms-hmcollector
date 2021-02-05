@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.10.1] - 2021-02-05
+
+### Changed
+
+- Added User-Agent headers to outbound HTTP requests.
+
 ## [2.10.0] - 2021-02-03
 
 ### Changed

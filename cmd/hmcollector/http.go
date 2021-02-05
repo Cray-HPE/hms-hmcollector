@@ -28,7 +28,6 @@ import (
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
-	"time"
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
 )
 
@@ -58,22 +57,12 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 	var resp *http.Response
 	var doErr error
 
-	//This is not retryablehttp, so implement the retries here
-
-	for ix := 1; ix <= 3; ix ++ {
-		rfClientLock.RLock()
-		resp, doErr = rfClient.Do(request)
-		rfClientLock.RUnlock()
-		if (doErr == nil) {
-			break
-		}
-		logger.Error("client.Do() ",zap.Int("attempt",ix),zap.Error(doErr))
-		time.Sleep(time.Duration(*httpTimeout + (ix*2)) * time.Second)
-	}
-
+	rfClientLock.RLock()
+	resp, doErr = rfClient.Do(request)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
+	rfClientLock.RUnlock()
 	if doErr != nil {
 		endpointLogger.Error("Unable to do request!", 
 			zap.Error(doErr), zap.String("fullURL", fullURL))
