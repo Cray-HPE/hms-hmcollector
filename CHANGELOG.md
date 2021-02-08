@@ -24,6 +24,10 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.8.9] - 2021-02-08
+
+- Update Copyright/License info
+
 ## [2.8.8] - 2020-11-13
 
 - CASMHMS-4215 - Added final CA bundle configmap handling to Helm chart.
