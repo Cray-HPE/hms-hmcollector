@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.10.2] - 2021-04-16
+
+### Changed
+
+- Updated Dockerfiles to pull base images from Artifactory instead of DTR.
+
 ## [2.10.1] - 2021-02-05
 
 ### Changed
@@ -42,12 +48,15 @@ Security - in case of vulnerabilities
 
 - Updated license file.
 
-
 ## [2.8.9] - 2020-12-16
+
+### Changed
 
 - CASMHMS-4241 - Stop collecting/polling River env telemetry if SMA is not available.
 
 ## [2.8.8] - 2020-11-13
+
+### Added
 
 - CASMHMS-4215 - Added final CA bundle configmap handling to Helm chart.
 
@@ -66,21 +75,25 @@ Security - in case of vulnerabilities
 # [2.8.5] - 2020-09-25
 
 ### Added
+
 - CASMHMS-3947 - Support for HPE DL325
 
 # [2.8.4] - 2020-09-10
 
 ### Security
+
 - CASMHMS-3993 - Updated hms-hmcollector to use trusted baseOS images.
 
 # [2.8.3] - 2020-09-08
 
 ### Fixed
+
 - CASMHMS-3615 - made credentials refresh if the request ever comes back unauthorized.
 
 # [2.8.2] - 2020-07-20
 
 ### Changed
+
 - CASMHMS-3783 - Re-enabling by default Telemetry Polling for all River nodes
 - Whether polling is enabled can now configured via a Helm chart value override
 - Specifying the value `hmcollector_enable_polling=false` as an override in your Loftsman manifest will disable polling in the collector.
@@ -88,6 +101,7 @@ Security - in case of vulnerabilities
 # [2.8.1] - 2020-07-17
 
 ### Changed
+
 - CASMHMS-3772 - Disabling Telemetry Polling for all River nodes
 
 # [2.8.0] - 2020-06-29
@@ -97,6 +111,8 @@ Security - in case of vulnerabilities
 - CASMHMS-3607 - Added CT smoke test for hmcollector.
 
 # [2.7.6] - 2020-06-05
+
+### Changed
 
 - CASMHMS-3260 - Now is online installable, upgradable, downgradable.
 
@@ -140,9 +156,11 @@ Security - in case of vulnerabilities
 # [2.6.1] - 2020-02-07
 
 ### Added
+
 - CASMHMS-2642 - Updated liveness/readiness probes.
 
 # [2.6.0] - 2020-01-09
 
 ### Added
+
 - Initial version of changelog.
