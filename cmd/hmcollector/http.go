@@ -31,9 +31,6 @@ import (
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
 )
 
-//ZZZZ
-var fakery = true
-
 func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
                   fullURL string, body *[]byte) (payloadBytes []byte, statusCode int, err error) {
 
@@ -76,11 +73,6 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 
 	// Now we need to check to see if we got a 401 (Unauthorized) or 403 (Forbidden).
 	// If so, refresh the credentials in Vault.
-//ZZZZ
-if (fakery) {
-  fakery = false
-  resp.StatusCode = http.StatusUnauthorized
-}
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		endpointLogger.Warn("Got Unauthorized response from endpoint, refreshing credentials...")
