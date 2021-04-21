@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.10.2] - 2021-04-21
+
+### Changed
+
+- Fixed HTTP response leaks which can lead to istio OOM.
+
 ## [2.10.1] - 2021-02-05
 
 ### Changed
