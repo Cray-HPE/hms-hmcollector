@@ -31,6 +31,9 @@ import (
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
 )
 
+//ZZZZ
+var fakery = true
+
 func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
                   fullURL string, body *[]byte) (payloadBytes []byte, statusCode int, err error) {
 
@@ -73,8 +76,19 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 
 	// Now we need to check to see if we got a 401 (Unauthorized) or 403 (Forbidden).
 	// If so, refresh the credentials in Vault.
+//ZZZZ
+if (fakery) {
+  fakery = false
+  resp.StatusCode = http.StatusUnauthorized
+}
+
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		endpointLogger.Warn("Got Unauthorized response from endpoint, refreshing credentials...")
+
+		//Drain the unused response body.
+		if (resp.Body != nil) {
+			_,_ = ioutil.ReadAll(resp.Body)
+		}
 
 		// Keep track of the previous credentials to see if they change.
 		previousUsername := endpoint.User
@@ -89,12 +103,6 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 		} else {
 			if endpoint.User != previousUsername || endpoint.Password != previousPassword {
 				endpointLogger.Info("Successfully updated credentials for endpoint. Re-attempting action...")
-
-				//Drain the response body.
-				if (resp.Body != nil) {
-					_,_ = ioutil.ReadAll(resp.Body)
-				}
-
 				// Recursively call this function again.
 				return doHTTPAction(endpoint, method, fullURL, body)
 			} else {
