@@ -655,6 +655,8 @@ stash.us.cray.com/HMS/hms-base v1.12.0 h1:LsEi7z1fnv9qOuli2+ThA8TF3yPqNINOrBVu/9
 stash.us.cray.com/HMS/hms-base v1.12.0/go.mod h1:2bT2ZeXBgXsrIsAtw0P6ILlTNilgOzzpJ/1NV545Tl0=
 stash.us.cray.com/HMS/hms-certs v1.2.0 h1:sntICwYa5W04CeXBkoHyk1K6P1TGqO1s8Y+DNXw8+Sk=
 stash.us.cray.com/HMS/hms-certs v1.2.0/go.mod h1:G8+mHi2izwVRF6WkxobnRAnAgcE79CIgvmtJU4HkIcI=
+stash.us.cray.com/HMS/hms-certs v1.2.2 h1:lh/dPgaoDNqWyQZgxz/towl9UfDr/SfX2BU48/syfWQ=
+stash.us.cray.com/HMS/hms-certs v1.2.2/go.mod h1:G8+mHi2izwVRF6WkxobnRAnAgcE79CIgvmtJU4HkIcI=
 stash.us.cray.com/HMS/hms-compcredentials v1.10.0 h1:I0z3cW1FJ92TMbHq7BKFX7NXnu1MFFGgZkKTLw4sih0=
 stash.us.cray.com/HMS/hms-compcredentials v1.10.0/go.mod h1:G7HccBFy+wJkxdxSgVRmGm0MzG3KBFNtkx9NW41jMlA=
 stash.us.cray.com/HMS/hms-go-http-lib v1.4.0 h1:R46YZXI6m2BpL1tVrw5RZ4wzIPgPdb26v75eeFLzl4U=
@@ -664,3 +666,5 @@ stash.us.cray.com/HMS/hms-securestorage v1.11.0 h1:VEW860tXgGqD0jSB8cAsEdvd5tb1m
 stash.us.cray.com/HMS/hms-securestorage v1.11.0/go.mod h1:/tRNXYwCBvVdbhu6a+i5R3Jftag4x8921qWwA+jo4JA=
 stash.us.cray.com/HMS/hms-smd v1.28.0 h1:O+5CfLX5iMzRXE6BJofV7pfocFOigWh6P46KF75355U=
 stash.us.cray.com/HMS/hms-smd v1.28.0/go.mod h1:KGYFO8eclZBvgdVP+6o7ohRpKTSNwW5fRxH8PD7VzWQ=
+stash.us.cray.com/HMS/hms-smd v1.28.7 h1:JyeaY4NiSDzlko+AscFl6dtQpepQjuzT83KAJyH6Fns=
+stash.us.cray.com/HMS/hms-smd v1.28.7/go.mod h1:KGYFO8eclZBvgdVP+6o7ohRpKTSNwW5fRxH8PD7VzWQ=
