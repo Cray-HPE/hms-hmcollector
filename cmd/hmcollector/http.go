@@ -76,6 +76,11 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		endpointLogger.Warn("Got Unauthorized response from endpoint, refreshing credentials...")
 
+		//Drain the unused response body.
+		if (resp.Body != nil) {
+			_,_ = ioutil.ReadAll(resp.Body)
+		}
+
 		// Keep track of the previous credentials to see if they change.
 		previousUsername := endpoint.User
 		previousPassword := endpoint.Password
