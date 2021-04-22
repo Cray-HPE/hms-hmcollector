@@ -24,11 +24,17 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.10.2] - 2021-04-16
+## [2.10.3] - 2021-04-21
 
 ### Changed
 
 - Updated Dockerfiles to pull base images from Artifactory instead of DTR.
+
+## [2.10.2] - 2021-04-21
+
+### Changed
+
+- Fixed HTTP response leaks which can lead to istio OOM.
 
 ## [2.10.1] - 2021-02-05
 
