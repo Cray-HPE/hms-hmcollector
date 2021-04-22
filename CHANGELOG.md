@@ -24,6 +24,10 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.8.10] - 2021-04-21
+
+- Fixed HTTP response leaks which can lead to istio OOM.
+
 ## [2.8.9] - 2021-02-08
 
 - Update Copyright/License info

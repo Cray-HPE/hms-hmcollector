@@ -28,7 +28,6 @@ import (
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
-	"time"
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
 )
 
@@ -58,22 +57,12 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 	var resp *http.Response
 	var doErr error
 
-	//This is not retryablehttp, so implement the retries here
-
-	for ix := 1; ix <= 3; ix ++ {
-		rfClientLock.RLock()
-		resp, doErr = rfClient.Do(request)
-		rfClientLock.RUnlock()
-		if (doErr == nil) {
-			break
-		}
-		logger.Error("client.Do() ",zap.Int("attempt",ix),zap.Error(doErr))
-		time.Sleep(time.Duration(*httpTimeout + (ix*2)) * time.Second)
-	}
-
+	rfClientLock.RLock()
+	resp, doErr = rfClient.Do(request)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
+	rfClientLock.RUnlock()
 	if doErr != nil {
 		endpointLogger.Error("Unable to do request!", 
 			zap.Error(doErr), zap.String("fullURL", fullURL))
@@ -84,8 +73,14 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 
 	// Now we need to check to see if we got a 401 (Unauthorized) or 403 (Forbidden).
 	// If so, refresh the credentials in Vault.
+
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		endpointLogger.Warn("Got Unauthorized response from endpoint, refreshing credentials...")
+
+		//Drain the unused response body.
+		if (resp.Body != nil) {
+			_,_ = ioutil.ReadAll(resp.Body)
+		}
 
 		// Keep track of the previous credentials to see if they change.
 		previousUsername := endpoint.User
@@ -100,7 +95,6 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 		} else {
 			if endpoint.User != previousUsername || endpoint.Password != previousPassword {
 				endpointLogger.Info("Successfully updated credentials for endpoint. Re-attempting action...")
-
 				// Recursively call this function again.
 				return doHTTPAction(endpoint, method, fullURL, body)
 			} else {
