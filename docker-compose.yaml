@@ -3,7 +3,7 @@ services:
   # Vault
   vault:
     hostname: vault
-    image: dtr.dev.cray.com/library/vault:1.4.2
+    image: arti.dev.cray.com/third-party-docker-stable-local/vault:1.5.5
     environment:
       - VAULT_DEV_ROOT_TOKEN_ID=hms
       - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
@@ -15,6 +15,7 @@ services:
   # The KV enabler comes from:
   # https://stash.us.cray.com/projects/HMS/repos/hms-redfish-translation-layer/browse/vault-kv-enabler.dockerfile
   vault-kv-enabler:
+    #TODO: need to build and push this image to Artifactory
     image: dtr.dev.cray.com/hms/vault-kv-enabler:1.4.0
     environment:
       - VAULT_ADDR=http://vault:8200
@@ -25,6 +26,7 @@ services:
 
   # HSM
   zookeeper:
+    #TODO: need to push this image to Artifactory
     image: dtr.dev.cray.com/confluentinc/cp-zookeeper:5.4.0
     hostname: zookeeper
     ports:
@@ -33,6 +35,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
   kafka:
+    #TODO: need to push this image to Artifactory
     image: dtr.dev.cray.com/confluentinc/cp-kafka:5.4.0
     hostname: kafka
     depends_on:
@@ -48,20 +51,23 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
   hmsds-postgres:
     hostname: hmsds-postgres
-    image: dtr.dev.cray.com/library/postgres:11-alpine
+    image: arti.dev.cray.com/third-party-docker-stable-local/postgres:11-alpine
     environment:
       - POSTGRES_PASSWORD=hmsdsuser
       - POSTGRES_USER=hmsdsuser
       - POSTGRES_DB=hmsds
   cray-smd-init:
-    image: dtr.dev.cray.com/cray/cray-smd-init
+    image: arti.dev.cray.com/csm-docker-master-local/cray-smd:latest
+    command: ["smd-init"]
+    entrypoint: ["/entrypoint.sh"]
     environment:
+      - SMD_DBHOST=hmsds-postgres
       - POSTGRES_HOST=hmsds-postgres
       - POSTGRES_PORT=5432
     depends_on:
       - hmsds-postgres
   cray-smd:
-    image: dtr.dev.cray.com/cray/cray-smd
+    image: arti.dev.cray.com/csm-docker-master-local/cray-smd:latest
     environment:
       - POSTGRES_HOST=hmsds-postgres
       - POSTGRES_PORT=5432
