@@ -1,15 +1,13 @@
 version: '3'
 services:
   zookeeper1:
-    #TODO: need to push this image to Artifactory
-    image: dtr.dev.cray.com/confluentinc/cp-zookeeper:5.4.0
+    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-zookeeper:6.1.1
     hostname: zookeeper1
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
   kafka1:
-    #TODO: need to push this image to Artifactory
-    image: dtr.dev.cray.com/confluentinc/cp-kafka:5.4.0
+    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-kafka:6.1.1
     hostname: kafka1
     depends_on:
       - zookeeper1
@@ -22,15 +20,13 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   zookeeper2:
-    #TODO: need to push this image to Artifactory
-    image: dtr.dev.cray.com/confluentinc/cp-zookeeper:5.4.0
+    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-zookeeper:6.1.1
     hostname: zookeeper2
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
   kafka2:
-    #TODO: need to push this image to Artifactory
-    image: dtr.dev.cray.com/confluentinc/cp-kafka:5.4.0
+    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-kafka:6.1.1
     hostname: kafka2
     depends_on:
       - zookeeper2
