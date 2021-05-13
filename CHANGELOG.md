@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.10.5] - 2021-05-13
+
+### Changed
+
+- Added support for humidity and liquidflow telemetry.
+
 ## [2.10.4] - 2021-05-04
 
 ### Changed
