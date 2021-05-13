@@ -32,6 +32,7 @@ kafkaBrokers:
       - cray-fabric-perf-telemetry
       - cray-fabric-crit-telemetry
       - cray-dmtf-resource-event
+# ZZZZ add new ones here
   - BrokerAddress: cray-shared-kafka-kafka-bootstrap.services.svc.cluster.local:9092
     TopicsToPublish:
       - cray-dmtf-resource-event
