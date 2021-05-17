@@ -24,11 +24,17 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.10.5] - 2021-05-13
+## [2.10.6] - 2021-05-17
 
 ### Changed
 
 - Added support for humidity and liquidflow telemetry.
+
+## [2.10.5] - 2021-05-12
+
+### Changed
+
+- Update subscriptions and RF event processing to deal with iLO issues.
 
 ## [2.10.4] - 2021-05-04
 
