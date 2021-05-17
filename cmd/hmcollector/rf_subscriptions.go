@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"sync"
@@ -36,20 +37,48 @@ import (
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
 )
 
+func checkILO(endpoint *rf.RedfishEPDescription) bool {
+	// We want to know if the endpoint is iLO or not.  We will read out
+	// /redfish/v1/Registries/iLO to make this determination. If the read fails,
+	// we assume that this is not iLO. We don't care about the return payload.
+	URL := "https://" + endpoint.FQDN + "/redfish/v1/Registries/iLO"
+	_, statusCode, err := doHTTPAction(endpoint, http.MethodGet, URL, nil)
+	return err == nil && statusCode < 300
+}
+
+func getDestination(endpoint *rf.RedfishEPDescription) string {
+	destination, err := url.Parse(*restURL)
+	if err != nil {
+		logger.Error("RF event destination URL invalid",
+			zap.String("restURL", *restURL),
+			zap.Error(err))
+	}
+	if destination.Scheme == "http" && checkILO(endpoint) {
+		// iLO requires https
+		destination.Scheme = "https"
+	}
+	if destination.Port() == "" && *restPort != 80 && *restPort != 443 {
+		destination.Host += ":" + strconv.Itoa(*restPort)
+	}
+	// We are adding the endpoint name to the destination so we have a way to
+	// verify/fix the Context for redfish implementations which don't want to
+	// properly return the context (iLO).
+	destination.Path = "/" + endpoint.ID
+	return destination.String()
+}
+
 func postRFSubscription(endpoint *rf.RedfishEPDescription, evTypes []string, registryPrefixes []string) (bool, error) {
 	// Specify a port if we are not using the default http or https ports.
 	// NOTE: This will NOT work with Intel BMCs
 	subscribed := false
 	sub := hmcollector.EventSubscription{
 		Context:          endpoint.ID,
-		Destination:      *restURL + ":" + strconv.Itoa(*restPort),
+		Destination:      getDestination(endpoint),
 		EventTypes:       evTypes,
 		Protocol:         "Redfish",
 		RegistryPrefixes: registryPrefixes,
 	}
-	if *restPort == 80 || *restPort == 443 {
-		sub.Destination = *restURL
-	}
+
 	payloadBytes, err := json.Marshal(sub)
 	if err != nil {
 		return subscribed, err
@@ -60,6 +89,7 @@ func postRFSubscription(endpoint *rf.RedfishEPDescription, evTypes []string, reg
 
 	postLogger := logger.With(
 		zap.String("fullURL", fullURL),
+		zap.String("payloadBytes", string(payloadBytes)),
 		zap.String("responsePayloadBytes", string(responsePayloadBytes)),
 		zap.Int("statusCode", statusCode),
 	)
@@ -85,8 +115,6 @@ func postRFSubscription(endpoint *rf.RedfishEPDescription, evTypes []string, reg
 }
 
 func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []string) (bool, error) {
-	portStr := strconv.Itoa(*restPort)
-
 	baseEndpointURL := "https://" + endpoint.FQDN
 
 	fullURL := fmt.Sprintf("%s/redfish/v1/EventService/Subscriptions", baseEndpointURL)
@@ -114,7 +142,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 		if err != nil {
 			return false, err
 		}
-		if eventSub.Destination == *restURL || eventSub.Destination == *restURL+":"+portStr {
+		if eventSub.Destination == getDestination(endpoint) {
 			// Matches this destination, make sure the registry prefix is one we created.
 			match := false
 			if registryPrefixes == nil && eventSub.RegistryPrefixes == nil {
