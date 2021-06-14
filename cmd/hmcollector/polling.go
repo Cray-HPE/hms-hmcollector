@@ -102,6 +102,8 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 						payload.topic = "cray-telemetry-voltage"
 					case river_collector.TemperatureMessageID:
 						payload.topic = "cray-telemetry-temperature"
+					case river_collector.FanMessageID:
+						payload.topic = "cray-telemetry-fan"
 					default:
 						logger.Error("Encountered message with unknown MessageId!", zap.Any("event", event))
 						continue
