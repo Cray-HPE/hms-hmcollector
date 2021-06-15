@@ -35,6 +35,7 @@ const (
 	PowerMessageID       = MessageRegistryName + "." + "Power"
 	VoltageMessageID     = MessageRegistryName + "." + "Voltage"
 	TemperatureMessageID = MessageRegistryName + "." + "Temperature"
+	FanMessageID         = MessageRegistryName + "." + "Fan"
 
 	TelemetryTypePower   TelemetryType = "Power"
 	TelemetryTypeThermal TelemetryType = "Thermal"

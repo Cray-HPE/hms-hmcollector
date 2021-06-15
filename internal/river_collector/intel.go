@@ -58,6 +58,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 			payload.Timestamp = timestamp
 			payload.Location = location
 			payload.PhysicalContext = "Chassis"
+			payload.DeviceSpecificContext = "Chassis_PowerControl"
 			indexU64, _ := strconv.ParseUint(PowerControl.MemberId, 10, 8)
 			*payload.Index = uint8(indexU64)
 			payload.Value = strconv.FormatFloat(PowerControl.PowerConsumedWatts, 'f', -1, 64)
@@ -84,6 +85,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 		payload.Timestamp = timestamp
 		payload.Location = location
 		payload.PhysicalContext = "PowerSupplyBay"
+		payload.DeviceSpecificContext = "PowerSupplyBay_" + PowerSupply.MemberId
 		indexU64, _ := strconv.ParseUint(PowerSupply.MemberId, 10, 8)
 		*payload.Index = uint8(indexU64)
 		payload.Value = strconv.FormatFloat(PowerSupply.LineInputVoltage, 'f', -1, 64)
