@@ -59,6 +59,7 @@ func (collector GigabyteRiverCollector) ParseJSONPowerEvents(payloadBytes []byte
 			payload.Timestamp = timestamp
 			payload.Location = location
 			payload.PhysicalContext = PowerControl.PhysicalContext
+			payload.DeviceSpecificContext = PowerControl.PhysicalContext + "_PowerControl"
 			indexU64, _ := strconv.ParseUint(PowerControl.MemberId, 10, 8)
 			*payload.Index = uint8(indexU64)
 			payload.Value = strconv.FormatFloat(PowerControl.PowerMetrics.AverageConsumedWatts, 'f', -1,
@@ -71,6 +72,9 @@ func (collector GigabyteRiverCollector) ParseJSONPowerEvents(payloadBytes []byte
 	if len(power.PowerControl) > 0 {
 		events = append(events, powerEvent)
 	}
+
+	//NOTE: GB BMCs don't show any PowerSupply info.  The structs are basically
+	//empty.  So, we'll skip them.
 
 	voltageEvent := hmcollector.Event{
 		MessageId:      VoltageMessageID,
@@ -109,12 +113,12 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 		return
 	}
 
-	temperatureEvent := hmcollector.Event{
-		MessageId:      TemperatureMessageID,
+	fanEvent := hmcollector.Event{
+		MessageId:      FanMessageID,
 		EventTimestamp: timestamp,
 		Oem:            &hmcollector.Sensors{},
 	}
-	temperatureEvent.Oem.TelemetrySource = "River"
+	fanEvent.Oem.TelemetrySource = "River"
 
 	// Fans
 	for _, Fan := range thermal.Fans {
@@ -131,10 +135,22 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 		*payload.Index = uint8(indexU64)
 		payload.Value = strconv.FormatFloat(Fan.Reading, 'f', -1, 64)
 
-		temperatureEvent.Oem.Sensors = append(temperatureEvent.Oem.Sensors, payload)
+		fanEvent.Oem.Sensors = append(fanEvent.Oem.Sensors, payload)
+	}
+
+	if (len(thermal.Fans) > 0) {
+		events = append(events, fanEvent)
 	}
 
 	// Temperatures
+
+	temperatureEvent := hmcollector.Event{
+		MessageId:      TemperatureMessageID,
+		EventTimestamp: timestamp,
+		Oem:            &hmcollector.Sensors{},
+	}
+	temperatureEvent.Oem.TelemetrySource = "River"
+
 	for _, Temperature := range thermal.Temperatures {
 		payload := hmcollector.CrayJSONPayload{
 			Index: new(uint8),
@@ -152,7 +168,7 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 		temperatureEvent.Oem.Sensors = append(temperatureEvent.Oem.Sensors, payload)
 	}
 
-	if len(thermal.Fans) > 0 || len(thermal.Temperatures) > 0 {
+	if (len(thermal.Temperatures) > 0) {
 		events = append(events, temperatureEvent)
 	}
 
