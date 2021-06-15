@@ -24,11 +24,17 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.12.1] - 2021-06-09
+
+### Changed
+
+- Fixed issues with fan and power telemetry.
+
 ## [2.12.0] - 2021-06-09
 
 ### Changed
 
-- Bump minor version for CSM 1.1 release branch
+- Bump minor version for CSM 1.2 release branch
 
 ## [2.11.0] - 2021-06-07
 
