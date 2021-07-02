@@ -82,6 +82,7 @@ const (
 	PowerType             = "Power"
 	NodeAccelRiserType    = "GPUSubsystem"
 	AssemblyType          = "Assembly"
+	HpeDeviceType         = "HpeDevice"
 	OutletType            = "Outlet"
 	PDUType               = "PowerDistribution"
 	NetworkAdapterType    = "NetworkAdapter"
