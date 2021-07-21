@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.10.7] - 2021-07-21
+
+### Changed
+
+- Add support for building within the CSM Jenkins.
+
 ## [2.10.6] - 2021-05-17
 
 ### Changed
