@@ -27,8 +27,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"stash.us.cray.com/HMS/hms-smd/pkg/redfish"
-	"stash.us.cray.com/HMS/hms-certs/pkg/hms_certs"
+	"github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"github.com/Cray-HPE/hms-certs/pkg/hms_certs"
 )
 
 func GetEndpointList(httpClient *hms_certs.HTTPClientPair, gatewayUrl string) ([]rf.RedfishEPDescription, error) {

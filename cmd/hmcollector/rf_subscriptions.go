@@ -33,8 +33,8 @@ import (
 	"sync"
 	"time"
 
-	"stash.us.cray.com/HMS/hms-hmcollector/internal/hmcollector"
-	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
+	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 func checkILO(endpoint *rf.RedfishEPDescription) bool {
