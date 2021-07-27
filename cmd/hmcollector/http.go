@@ -28,7 +28,7 @@ import (
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
-	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
