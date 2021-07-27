@@ -43,15 +43,15 @@ FROM build-base AS base
 RUN go env -w GO111MODULE=auto
 
 # Copy all the necessary files to the image.
-COPY cmd        $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/cmd
-COPY internal   $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/internal
-COPY vendor     $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/vendor
+COPY cmd        $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/cmd
+COPY internal   $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/internal
+COPY vendor     $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/vendor
 
 ### Build Stage ###
 FROM base AS builder
 
 RUN set -ex \
-    && go build -v -o /usr/local/bin/hmcollector stash.us.cray.com/HMS/hms-hmcollector/cmd/hmcollector
+    && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
 
 ## Final Stage ###
 

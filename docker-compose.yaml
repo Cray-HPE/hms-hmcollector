@@ -13,7 +13,7 @@ services:
     cap_add:
       - IPC_LOCK
   # The KV enabler comes from:
-  # https://stash.us.cray.com/projects/HMS/repos/hms-redfish-translation-layer/browse/vault-kv-enabler.dockerfile
+  # https://github.com/Cray-HPE/hms-redfish-translation-layer/blob/master/vault-kv-enabler.dockerfile
   vault-kv-enabler:
     image: arti.dev.cray.com/csm-docker-master-local/vault-kv-enabler:1.11.3
     environment:

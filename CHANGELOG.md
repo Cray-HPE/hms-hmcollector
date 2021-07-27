@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.12.4] - 2021-07-27
+
+### Changed
+
+- Github transition phase 3. Remove stash references.
+
 ## [2.12.3] - 2021-07-21
 
 ### Changed
