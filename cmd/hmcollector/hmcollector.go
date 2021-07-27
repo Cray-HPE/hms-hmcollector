@@ -37,11 +37,11 @@ import (
 	"github.com/namsral/flag"
 	"go.uber.org/zap"
 
-	"stash.us.cray.com/HMS/hms-hmcollector/internal/hmcollector"
-	"stash.us.cray.com/HMS/hms-hmcollector/internal/river_collector"
-	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
-	"stash.us.cray.com/HMS/hms-certs/pkg/hms_certs"
-	"stash.us.cray.com/HMS/hms-base"
+	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
+	"github.com/Cray-HPE/hms-hmcollector/internal/river_collector"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"github.com/Cray-HPE/hms-certs/pkg/hms_certs"
+	"github.com/Cray-HPE/hms-base"
 )
 
 const NumWorkers = 30
