@@ -41,15 +41,15 @@ FROM build-base AS base
 RUN go env -w GO111MODULE=auto
 
 # Copy all the necessary files to the image.
-COPY cmd        $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/cmd
-COPY internal   $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/internal
-COPY vendor     $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/vendor
+COPY cmd        $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/cmd
+COPY internal   $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/internal
+COPY vendor     $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/vendor
 
 ### Build Stage ###
 FROM base AS builder
 
 RUN set -ex \
-    && go build -v -o /usr/local/bin/kafka_tool stash.us.cray.com/HMS/hms-hmcollector/cmd/kafka_tool
+    && go build -v -o /usr/local/bin/kafka_tool github.com/Cray-HPE/hms-hmcollector/cmd/kafka_tool
 
 ### Final Stage ###
 FROM arti.dev.cray.com/baseos-docker-master-local/alpine:3.13

@@ -26,7 +26,7 @@ import (
 	"fmt"
 
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
-	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 type RedfishEndpoints struct {
