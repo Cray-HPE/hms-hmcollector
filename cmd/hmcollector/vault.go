@@ -27,9 +27,9 @@ import (
 	"go.uber.org/zap"
 	"time"
 
-	compcredentials "stash.us.cray.com/HMS/hms-compcredentials"
-	securestorage "stash.us.cray.com/HMS/hms-securestorage"
-	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
+	compcredentials "github.com/Cray-HPE/hms-compcredentials"
+	securestorage "github.com/Cray-HPE/hms-securestorage"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 var compCredStore *compcredentials.CompCredStore
