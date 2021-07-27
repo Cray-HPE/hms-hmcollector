@@ -33,7 +33,7 @@ import (
 	"strings"
 	"time"
 
-	"stash.us.cray.com/HMS/hms-hmcollector/internal/hmcollector"
+	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 )
 
 // Unmarshalling events is complicated because of the fact that some redfish
