@@ -31,7 +31,7 @@ FROM arti.dev.cray.com/baseos-docker-master-local/golang:1.16-alpine3.13 AS buil
 ARG LIBRDKAFKA_VER_MIN
 
 RUN set -ex \
-    && apk update \
+    && apk -U upgrade \
     && apk add --no-cache \
         build-base \
         "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
@@ -64,7 +64,7 @@ ARG LIBRDKAFKA_VER_MIN
 COPY --from=builder /usr/local/bin/hmcollector /usr/local/bin
 
 RUN set -ex \
-    && apk update \
+    && apk -U upgrade \
     && apk add --no-cache \
         "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
         pkgconf \
