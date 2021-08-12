@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.11.4] - 2021-08-10
+
+### Changed
+
+- Added GitHub configuration files.
+
 ## [2.11.3] - 2021-07-27
 
 ### Changed
