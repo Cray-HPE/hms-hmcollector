@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.11.5] - 2021-09-03
+
+### Changed
+
+- Changed the docker image to run as the user nobody
+
 ## [2.11.4] - 2021-08-10
 
 ### Changed

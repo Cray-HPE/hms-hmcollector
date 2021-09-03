@@ -82,4 +82,7 @@ ENV SM_URL=https://cray-smd
 ENV REST_URL=localhost
 ENV REST_PORT=80
 
+# nobody 65534:65534
+USER 65534:65534
+
 CMD ["sh", "-c", "hmcollector"]
