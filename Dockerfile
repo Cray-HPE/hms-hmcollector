@@ -68,7 +68,10 @@ RUN set -ex \
     && apk add --no-cache \
         "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
         pkgconf \
-        curl
+        curl \
+        libcap \
+    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/hmcollector
+
 
 ENV LOG_LEVEL=info
 ENV POLLING_ENABLED=false
