@@ -30,6 +30,8 @@ CHART_PATH ?= kubernetes
 CHART_NAME ?= cray-hms-hmcollector
 CHART_VERSION ?= $(shell cat .version)
 
+all: image chart
+
 image:
 	docker build ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
 
