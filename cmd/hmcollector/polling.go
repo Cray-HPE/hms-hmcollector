@@ -108,7 +108,15 @@ func monitorPollingEndpoints() {
 	var endpointWaitGroup sync.WaitGroup
 
 	for Running {
-		for _, endpoint := range HSMEndpoints {
+		hsmEndpointsCache := map[string]*rf.RedfishEPDescription{}
+		HSMEndpointsLock.Lock()
+		for id, ep := range HSMEndpoints {
+			hsmEndpointsCache[id] = ep
+		}
+		HSMEndpointsLock.Unlock()
+		
+
+		for _, endpoint := range hsmEndpointsCache {
 			// Check to make sure we don't already know about this endpoint.
 			endpointIsKnown := false
 			for _, knownEndpoint := range endpoints {

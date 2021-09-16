@@ -3,7 +3,7 @@ services:
   # Vault
   vault:
     hostname: vault
-    image: dtr.dev.cray.com/library/vault:1.4.2
+    image: arti.dev.cray.com/third-party-docker-stable-local/vault:1.5.5
     environment:
       - VAULT_DEV_ROOT_TOKEN_ID=hms
       - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
@@ -15,17 +15,17 @@ services:
   # The KV enabler comes from:
   # https://stash.us.cray.com/projects/HMS/repos/hms-redfish-translation-layer/browse/vault-kv-enabler.dockerfile
   vault-kv-enabler:
-    image: dtr.dev.cray.com/hms/vault-kv-enabler:1.4.0
+    image: arti.dev.cray.com/csm-docker-master-local/vault-kv-enabler:1.11.3
     environment:
       - VAULT_ADDR=http://vault:8200
       - VAULT_TOKEN=hms
-      - KV_STORES=hms-creds,reds-creds
+      - KV_STORES=hms-creds
     depends_on:
       - vault
 
   # HSM
   zookeeper:
-    image: dtr.dev.cray.com/confluentinc/cp-zookeeper:5.4.0
+    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-zookeeper:6.1.1
     hostname: zookeeper
     ports:
       - "2181:2181"
@@ -33,7 +33,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
   kafka:
-    image: dtr.dev.cray.com/confluentinc/cp-kafka:5.4.0
+    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-kafka:6.1.1
     hostname: kafka
     depends_on:
       - zookeeper
@@ -48,20 +48,23 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
   hmsds-postgres:
     hostname: hmsds-postgres
-    image: dtr.dev.cray.com/library/postgres:11-alpine
+    image: arti.dev.cray.com/third-party-docker-stable-local/postgres:11-alpine
     environment:
       - POSTGRES_PASSWORD=hmsdsuser
       - POSTGRES_USER=hmsdsuser
       - POSTGRES_DB=hmsds
   cray-smd-init:
-    image: dtr.dev.cray.com/cray/cray-smd-init
+    image: arti.dev.cray.com/csm-docker-master-local/cray-smd:latest
+    command: ["smd-init"]
+    entrypoint: ["/entrypoint.sh"]
     environment:
+      - SMD_DBHOST=hmsds-postgres
       - POSTGRES_HOST=hmsds-postgres
       - POSTGRES_PORT=5432
     depends_on:
       - hmsds-postgres
   cray-smd:
-    image: dtr.dev.cray.com/cray/cray-smd
+    image: arti.dev.cray.com/csm-docker-master-local/cray-smd:latest
     environment:
       - POSTGRES_HOST=hmsds-postgres
       - POSTGRES_PORT=5432
@@ -85,9 +88,11 @@ services:
   hms-hmcollector:
     build: .
     environment:
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=INFO
       - KAFKA_HOST=kafka
-      - SM_URL=http://cray-smd:27779
+      - KAFKA_BROKERS_CONFIG=/configs/kafka_brokers-local.json
+      # - SM_URL=http://cray-smd:27779
+      - SM_URL=http://host.docker.internal:8888
       - POLLING_ENABLED=true
       - RF_SUBSCRIBE_ENABLED=true
       - VAULT_TOKEN=hms
