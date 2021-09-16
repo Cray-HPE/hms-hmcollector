@@ -49,7 +49,7 @@ COPY vendor     $GOPATH/src/stash.us.cray.com/HMS/hms-hmcollector/vendor
 FROM base AS builder
 
 RUN set -ex \
-    && go build -race -v -o /usr/local/bin/hmcollector stash.us.cray.com/HMS/hms-hmcollector/cmd/hmcollector
+    && go build -v -o /usr/local/bin/hmcollector stash.us.cray.com/HMS/hms-hmcollector/cmd/hmcollector
 
 ## Final Stage ###
 
