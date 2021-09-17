@@ -24,7 +24,7 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.11.6] - 2021-09-17
+## [2.12.6] - 2021-09-17
 
 ### Fixed
 
