@@ -108,7 +108,7 @@ var (
 	PollingShutdown     chan bool
 
 	hsmEndpointRefreshShutdown chan bool
-	HSMEndpointsLock sync.Mutex
+	HSMEndpointsLock           sync.Mutex
 	HSMEndpoints               map[string]*rf.RedfishEPDescription
 )
 

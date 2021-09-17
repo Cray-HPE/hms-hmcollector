@@ -91,8 +91,7 @@ services:
       - LOG_LEVEL=INFO
       - KAFKA_HOST=kafka
       - KAFKA_BROKERS_CONFIG=/configs/kafka_brokers-local.json
-      # - SM_URL=http://cray-smd:27779
-      - SM_URL=http://host.docker.internal:8888
+      - SM_URL=http://cray-smd:27779
       - POLLING_ENABLED=true
       - RF_SUBSCRIBE_ENABLED=true
       - VAULT_TOKEN=hms
