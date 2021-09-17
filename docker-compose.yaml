@@ -19,7 +19,7 @@ services:
     environment:
       - VAULT_ADDR=http://vault:8200
       - VAULT_TOKEN=hms
-      - KV_STORES=hms-creds,reds-creds
+      - KV_STORES=hms-creds
     depends_on:
       - vault
 
@@ -88,8 +88,9 @@ services:
   hms-hmcollector:
     build: .
     environment:
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=INFO
       - KAFKA_HOST=kafka
+      - KAFKA_BROKERS_CONFIG=/configs/kafka_brokers-local.json
       - SM_URL=http://cray-smd:27779
       - POLLING_ENABLED=true
       - RF_SUBSCRIBE_ENABLED=true
