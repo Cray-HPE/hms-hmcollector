@@ -33,15 +33,15 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap/zapcore"
 	"github.com/namsral/flag"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
+	base "stash.us.cray.com/HMS/hms-base"
+	"stash.us.cray.com/HMS/hms-certs/pkg/hms_certs"
 	"stash.us.cray.com/HMS/hms-hmcollector/internal/hmcollector"
 	"stash.us.cray.com/HMS/hms-hmcollector/internal/river_collector"
 	rf "stash.us.cray.com/HMS/hms-smd/pkg/redfish"
-	"stash.us.cray.com/HMS/hms-certs/pkg/hms_certs"
-	"stash.us.cray.com/HMS/hms-base"
 )
 
 const NumWorkers = 30
@@ -106,6 +106,7 @@ var (
 	PollingShutdown     chan bool
 
 	hsmEndpointRefreshShutdown chan bool
+	HSMEndpointsLock           sync.Mutex
 	HSMEndpoints               map[string]*rf.RedfishEPDescription
 )
 
@@ -133,9 +134,14 @@ func doUpdateHSMEndpoints() {
 				newEndpoint := newEndpoints[endpointIndex]
 
 				// Make sure this is a new endpoint.
-				if _, endpointIsKnown := HSMEndpoints[newEndpoint.ID]; endpointIsKnown {
+				HSMEndpointsLock.Lock()
+				_, endpointIsKnown := HSMEndpoints[newEndpoint.ID];
+				HSMEndpointsLock.Unlock()
+				
+				if  endpointIsKnown {
 					continue
 				}
+				
 				// No point in wasting our time trying to talk to endpoints HSM wasn't able to.
 				if newEndpoint.DiscInfo.LastStatus != "DiscoverOK" {
 					logger.Warn("Ignoring endpoint because HSM status not DiscoveredOK",
@@ -160,7 +166,9 @@ func doUpdateHSMEndpoints() {
 					}
 				}
 
+				HSMEndpointsLock.Lock()
 				HSMEndpoints[newEndpoint.ID] = &newEndpoint
+				HSMEndpointsLock.Unlock()
 			}
 		}
 
