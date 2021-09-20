@@ -25,7 +25,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"net/http"
 	"net/url"
 	"path"
@@ -35,6 +34,7 @@ import (
 
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"go.uber.org/zap"
 )
 
 func checkILO(endpoint *rf.RedfishEPDescription) bool {
@@ -414,7 +414,14 @@ func doRFSubscribe() {
 		logger.Debug("Running new Redfish endpoint scan.", zap.Int("subCheckCnt", subCheckCnt))
 
 		// Determine if any new endpoints have been added.
-		for _, newEndpoint := range HSMEndpoints {
+		hsmEndpointsCache := map[string]*rf.RedfishEPDescription{}
+		HSMEndpointsLock.Lock()
+		for id, ep := range HSMEndpoints {
+			hsmEndpointsCache[id] = ep
+		}
+		HSMEndpointsLock.Unlock()
+
+		for _, newEndpoint := range hsmEndpointsCache {
 			if endpoint, ok := endpoints[newEndpoint.ID]; !ok || *endpoint.Status == hmcollector.RFSUBSTATUS_ERROR {
 				// New endpoint found. Add it to our list and queue it for subscribing.
 				logger.Info("Found new endpoint.", zap.Any("xname", newEndpoint.ID))
