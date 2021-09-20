@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.12.6] - 2021-09-17
+
+### Fixed
+
+- CASMHMS-5156 - Added locking around `HSMEndpointsLock` map to prevent the collector from panicing after concurrent map iteration and write.
+- Expose resource limits and requests in the collector Helm chart, so they can be overridable via customizations.yaml.
+
 ## [2.12.5] - 2021-08-10
 
 ### Changed
