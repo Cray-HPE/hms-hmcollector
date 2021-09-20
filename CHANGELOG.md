@@ -30,6 +30,7 @@ Security - in case of vulnerabilities
 
 - CASMHMS-5156 - Added locking around `HSMEndpointsLock` map to prevent the collector from panicing after concurrent map iteration and write.
 - Expose resource limits and requests in the collector Helm chart, so they can be overridable via customizations.yaml.
+- TEST
 
 ## [2.12.5] - 2021-08-10
 
