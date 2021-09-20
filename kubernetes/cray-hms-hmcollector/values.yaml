@@ -1,6 +1,19 @@
 # This will get overwritten by the correct Ansible value. See the hms-install repo for more details.
 hmcollector_external_ip: "10.4.100.1"
 
+podAnnotations: {}
+# For example, override the default Istio sidecar proxy memory limit:
+# podAnnotations:
+#   sidecar.istio.io/proxyMemoryLimit: 5Gi
+
+resources:
+  limits:
+    cpu: "4"
+    memory: 5Gi
+  requests:
+    cpu: 500m
+    memory: 256Mi
+
 collectorConfig:
   logLevel: "INFO"
 
