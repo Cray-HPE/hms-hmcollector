@@ -68,7 +68,10 @@ RUN set -ex \
     && apk add --no-cache \
         "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
         pkgconf \
-        curl
+        curl \
+        libcap \
+    && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/hmcollector
+
 
 ENV LOG_LEVEL=info
 ENV POLLING_ENABLED=false
@@ -81,5 +84,8 @@ ENV HSM_REFRESH_INTERVAL=30
 ENV SM_URL=https://cray-smd
 ENV REST_URL=localhost
 ENV REST_PORT=80
+
+# nobody 65534:65534
+USER 65534:65534
 
 CMD ["sh", "-c", "hmcollector"]
