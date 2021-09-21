@@ -28,10 +28,12 @@ DOCKER_IMAGE ?= ${NAME}:${VERSION}
 # HELM CHART
 CHART_PATH ?= kubernetes
 CHART_NAME ?= cray-hms-hmcollector
-CHART_VERSION ?= local
+CHART_VERSION ?= $(shell cat .version)
+
+all: image chart
 
 image:
-	docker build --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
+	docker build ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
 
 chart:
 	helm dep up ${CHART_PATH}/${CHART_NAME}
