@@ -5,3 +5,4 @@ scripts/delete_subscriptions.sh
 venv
 cmd/test
 configs/kafka_brokers.json
+kubernetes/.packaged
