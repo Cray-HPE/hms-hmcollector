@@ -17,6 +17,7 @@ pipeline {
         IS_STABLE = getBuildIsStable()
         VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
         DOCKER_ARGS = getDockerBuildArgs(name: env.NAME, description: env.DESCRIPTION)
+        NO_CACHE = "--no-cache"
         BUILD_METADATA = getRpmRevision(isStable: env.IS_STABLE)
         CHART_NAME = "cray-hms-hmcollector"
         CHART_VERSION = getChartVersion(name: env.CHART_NAME, isStable: env.IS_STABLE)
