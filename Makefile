@@ -30,7 +30,18 @@ CHART_PATH ?= kubernetes
 CHART_NAME ?= cray-hms-hmcollector
 CHART_VERSION ?= $(shell cat .version)
 
-all: image chart
+# Common RPM variable
+BUILD_METADATA ?= "1~development~$(shell git rev-parse --short HEAD)"
+
+# CT Test RPM
+TEST_SPEC_NAME ?= hms-hmcollector-ct-test
+TEST_RPM_VERSION ?= $(shell cat .version)
+TEST_SPEC_FILE ?= ${TEST_SPEC_NAME}.spec
+TEST_SOURCE_NAME ?= ${TEST_SPEC_NAME}-${TEST_RPM_VERSION}
+TEST_BUILD_DIR ?= $(PWD)/dist/hmcollector-ct-test-rpmbuild
+TEST_SOURCE_PATH := ${TEST_BUILD_DIR}/SOURCES/${TEST_SOURCE_NAME}.tar.bz2
+
+all: image chart test_rpm
 
 image:
 	docker build ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
@@ -38,6 +49,22 @@ image:
 chart:
 	helm dep up ${CHART_PATH}/${CHART_NAME}
 	helm package ${CHART_PATH}/${CHART_NAME} -d ${CHART_PATH}/.packaged --version ${CHART_VERSION}
+
+test_rpm: test_rpm_prepare test_rpm_package_source test_rpm_build_source test_rpm_build
+
+test_rpm_prepare:
+	rm -rf $(TEST_BUILD_DIR)
+	mkdir -p $(TEST_BUILD_DIR)/SPECS $(TEST_BUILD_DIR)/SOURCES
+	cp $(TEST_SPEC_FILE) $(TEST_BUILD_DIR)/SPECS/
+
+test_rpm_package_source:
+	tar --transform 'flags=r;s,^,/$(TEST_SOURCE_NAME)/,' --exclude .git --exclude dist -cvjf $(TEST_SOURCE_PATH) ./${TEST_SPEC_FILE} ./tests/ct ./LICENSE
+
+test_rpm_build_source:
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ts $(TEST_SOURCE_PATH) --define "_topdir $(TEST_BUILD_DIR)"
+
+test_rpm_build:
+	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(TEST_SPEC_FILE) --define "_topdir $(TEST_BUILD_DIR)" --nodeps
 
 snyk:
 	./runSnyk.sh
