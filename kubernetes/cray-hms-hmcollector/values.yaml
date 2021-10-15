@@ -6,15 +6,29 @@ podAnnotations: {}
 # podAnnotations:
 #   sidecar.istio.io/proxyMemoryLimit: 5Gi
 
-resources:
-  limits:
-    cpu: "4"
-    memory: 5Gi
-  requests:
-    cpu: 500m
-    memory: 256Mi
+collectorIngressConfig:
+  logLevel: "INFO"
 
-collectorConfig:
+  pollingEnabled: "false"
+  pollingInterval: "30"
+
+  redfishSubscribeEnabled: "false"
+  redfishStreamingEnabled: "false"
+  restEnabled: "true"
+
+  hsmRefreshInterval: "30"
+
+  vaultEnabled: "false"
+
+  resources:
+    limits:
+      cpu: "4"
+      memory: 5Gi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+
+collectorPollConfig:
   logLevel: "INFO"
 
   pollingEnabled: "true"
@@ -22,11 +36,19 @@ collectorConfig:
 
   redfishSubscribeEnabled: "true"
   redfishStreamingEnabled: "true"
-  restEnabled: "true"
+  restEnabled: "false"
 
   hsmRefreshInterval: "30"
 
   vaultEnabled: "true"
+
+  resources:
+    limits:
+      cpu: "4"
+      memory: 5Gi
+    requests:
+      cpu: 500m
+      memory: 256Mi
 
 imagesHost: "dtr.dev.cray.com"
 gateway: hmn-gateway
