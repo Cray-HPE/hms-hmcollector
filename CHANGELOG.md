@@ -24,7 +24,7 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.12.9] - 2021-10-19
+## [2.13.0] - 2021-10-19
 
 ### Changed
 
