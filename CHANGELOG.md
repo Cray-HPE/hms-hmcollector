@@ -24,11 +24,17 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.12.8] - 2021-10-19
+## [2.12.9] - 2021-10-19
 
 ### Changed
 
 - CASMHMS-5165 - Split the deployment of redfish event and streaming telemetry processing functionality from the deployment of subscription management and telemetry polling so they can be independently scaled.
+
+## [2.12.8] - 2021-10-11
+
+### Added
+
+- CASMHMS-5055 - Added hmcollector CT test RPM.
 
 ## [2.12.7] - 2021-09-20
 
