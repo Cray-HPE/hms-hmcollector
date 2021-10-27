@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.14.0] - 2021-10-27
+
+### Changed
+
+- Updated CT test RPM dependency.
+
 ## [2.13.0] - 2021-10-19
 
 ### Changed
