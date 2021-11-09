@@ -1,3 +1,7 @@
+image:
+  repository: artifactory.algol60.net/csm-docker/stable/hms-hmcollector
+  pullPolicy: IfNotPresent
+
 # This will get overwritten by the correct Ansible value. See the hms-install repo for more details.
 hmcollector_external_ip: "10.4.100.1"
 
@@ -50,7 +54,6 @@ collectorPollConfig:
       cpu: 500m
       memory: 256Mi
 
-imagesHost: "dtr.dev.cray.com"
 gateway: hmn-gateway
 service:
   type: ClusterIP

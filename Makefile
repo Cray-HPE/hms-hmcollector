@@ -68,3 +68,6 @@ test_rpm_build:
 
 snyk:
 	./runSnyk.sh
+
+clean:
+	rm -rf kubernetes/.packaged

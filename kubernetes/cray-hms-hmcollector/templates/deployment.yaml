@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
         - name: cray-hms-hmcollector-ingress
-          image: "{{ include "cray-hms-hmcollector.image-prefix" . }}cray/hms-hmcollector:{{ include "cray-hms-hmcollector.imageTag" . }}"
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: LOG_LEVEL
               value: "{{ .Values.collectorIngressConfig.logLevel}}"
@@ -119,8 +119,8 @@ spec:
     spec:
       containers:
         - name: cray-hms-hmcollector
-          image: "{{ include "cray-hms-hmcollector.image-prefix" . }}cray/hms-hmcollector:{{ include "cray-hms-hmcollector.imageTag" . }}"
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: LOG_LEVEL
               value: "{{ .Values.collectorPollConfig.logLevel}}"
