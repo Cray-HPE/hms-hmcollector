@@ -171,6 +171,7 @@ func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 }
 
 func (collector HPERiverCollector) GetPayloadURLForTelemetryType(endpoint *rf.RedfishEPDescription,
-	telemetryType TelemetryType) string {
-	return fmt.Sprintf("https://%s/redfish/v1/Chassis/1/%s", endpoint.FQDN, telemetryType)
+	telemetryType TelemetryType) []string {
+	url := fmt.Sprintf("https://%s/redfish/v1/Chassis/1/%s", endpoint.FQDN, telemetryType)
+	return []string{url}
 }

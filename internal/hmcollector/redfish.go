@@ -194,3 +194,50 @@ type Systems struct {
 type Chassis struct {
 	Model string
 }
+
+type RackPDU struct {
+	Manufacturer string     `json:"Manufacturer"`
+	Model        string     `json:"Model"`
+	Outlets      ResourceID `json:"Outlets"`
+	Branches     ResourceID `json:"Branches"`
+	Mains        ResourceID `json:"Mains"`
+}
+
+type OutletCollection struct {
+	Outlets []ResourceID `json:"Outlets"`
+}
+
+type BranchCollection struct {
+	Branch []ResourceID `json:"Branch"`
+}
+
+type MainsCollection struct {
+	Members []ResourceID `json:"Members"`
+}
+
+type Outlet struct {
+	Id          string       `json:"Id"`
+	Links       ResourceID   `json:"Links"`
+	PowerState  string       `json:"PowerState"`
+	Voltage     HPEPDUSensor `json:"Voltage"`
+	CurrentAmps HPEPDUSensor `json:"CurrentAmps"`
+	PowerWatts  HPEPDUSensor `json:"PowerWatts"`
+	EnergykWh   HPEPDUSensor `json:"EnergykWh"`
+}
+
+type Circuit struct {
+	Id                   string                  `json:"Id"`
+	Name                 string                  `json:"Name"`
+	CurrentAmps          HPEPDUSensor            `json:"CurrentAmps"`
+	EnergykWh            HPEPDUSensor            `json:"EnergykWh"`
+	PolyPhasePowerWatts  map[string]HPEPDUSensor `json:"PolyPhasePowerWatts"`
+	PolyPhaseVoltage     map[string]HPEPDUSensor `json:"PolyPhaseVoltage"`
+	PolyPhaseCurrentAmps map[string]HPEPDUSensor `json:"PolyPhaseCurrentAmps"`
+}
+
+type HPEPDUSensor struct {
+	DataSourceUri string  `json:"DataSourceUri"`
+	Reading       float64 `json:"Reading"`
+}
+
+

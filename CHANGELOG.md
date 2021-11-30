@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.15.0] - 2021-11-30
+
+### Added
+
+- CASMHMS-5268 - Added telemetry support for HPE PDUs.
+
 ## [2.14.0] - 2021-10-27
 
 ### Changed
