@@ -29,9 +29,11 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	base "github.com/Cray-HPE/hms-base"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 	"go.uber.org/zap"
@@ -422,6 +424,12 @@ func doRFSubscribe() {
 		HSMEndpointsLock.Unlock()
 
 		for _, newEndpoint := range hsmEndpointsCache {
+			// HPE PDUs don't support subscriptions properly. To prevent tipping it over,
+			// don't try subscribe to them.
+			if base.GetHMSType(newEndpoint.ID) == base.CabinetPDUController &&
+				!strings.Contains(newEndpoint.FQDN, "rts") {
+				continue
+			}
 			if endpoint, ok := endpoints[newEndpoint.ID]; !ok || *endpoint.Status == hmcollector.RFSUBSTATUS_ERROR {
 				// New endpoint found. Add it to our list and queue it for subscribing.
 				logger.Info("Found new endpoint.", zap.Any("xname", newEndpoint.ID))
@@ -433,7 +441,6 @@ func doRFSubscribe() {
 					Status:       endpointStatus,
 					PrefixGroups: &[][]string{},
 				}
-
 				pendingRFSubscriptions <- endpoints[newEndpoint.ID]
 			} else if subCheckCnt%subCheckFreq == 0 {
 				// Endpoint has a subscription, check that sub is still there and correct.
