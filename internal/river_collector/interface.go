@@ -34,8 +34,11 @@ const (
 	MessageRegistryName  = "CrayTelemetry"
 	PowerMessageID       = MessageRegistryName + "." + "Power"
 	VoltageMessageID     = MessageRegistryName + "." + "Voltage"
+	EnergyMessageID      = MessageRegistryName + "." + "Energy"
+	CurrentMessageID     = MessageRegistryName + "." + "Current"
 	TemperatureMessageID = MessageRegistryName + "." + "Temperature"
 	FanMessageID         = MessageRegistryName + "." + "Fan"
+	ResourceMessageID    = "ResourceEvent.1.0.ResourcePowerStateChanged"
 
 	TelemetryTypePower   TelemetryType = "Power"
 	TelemetryTypeThermal TelemetryType = "Thermal"
@@ -48,9 +51,15 @@ type MockRiverCollector struct{}
 type IntelRiverCollector struct{}
 type GigabyteRiverCollector struct{}
 type HPERiverCollector struct{}
+type HPEPDURiverCollector struct{
+	Sensors map[string]HPEPDUSensor
+}
+type HPEPDUSensor struct {
+	LastPowerState string
+}
 
 type RiverCollector interface {
-	GetPayloadURLForTelemetryType(endpoint *rf.RedfishEPDescription, telemetryType TelemetryType) string
+	GetPayloadURLForTelemetryType(endpoint *rf.RedfishEPDescription, telemetryType TelemetryType) []string
 
 	ParseJSONPowerEvents(payloadBytes []byte, location string) []hmcollector.Event
 	ParseJSONThermalEvents(payloadBytes []byte, location string) []hmcollector.Event
