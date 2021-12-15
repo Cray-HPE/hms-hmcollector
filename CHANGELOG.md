@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.16.0] - 2021-12-15
+
+### Changed
+
+- CASMHMS-5296 - Rebuild container image to resolve CVE-2021-3520.
+
 ## [2.15.0] - 2021-11-30
 
 ### Added
