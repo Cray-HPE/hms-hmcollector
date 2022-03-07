@@ -199,7 +199,7 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 			writeToKafka("cray-fabric-telemetry", eventsString)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricPerfTelemetry") {
 			writeToKafka("cray-fabric-perf-telemetry", eventsString)
-		} else if strings.HasPrefix(event.MessageId, "CrayFabricCritTelemetry") {
+		} else if strings.HasPrefix(event.MessageId, "CrayFabricCriticalTelemetry") {
 			writeToKafka("cray-fabric-crit-telemetry", eventsString)
 		} else {
 			// If we get to this point then we don't have a specific topic this should go on,
