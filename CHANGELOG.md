@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.17.0] - 2022-04-04
+
+### Changed
+
+- CASMHMS-5479 - Look for 'CrayFabricCriticalTelemetry' instead of 'CrayFabricCritTelemetry' prefixes for the fabric critical telemetry records.
+
 ## [2.16.0] - 2021-12-15
 
 ### Changed
