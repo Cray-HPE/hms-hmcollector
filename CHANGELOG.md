@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.18.0] - 2022-04-28
+
+### Changed
+
+- Updated hms-hmcollector to build using GitHub Actions instead of Jenkins.
+- Pull images from artifactory.algol60.net instead of arti.dev.cray.com.
+
 ## [2.17.0] - 2022-04-04
 
 ### Changed
