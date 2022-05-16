@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.19.0] - 2022-05-16
+
+### Changed
+
+- added crayfabric topic.
+
+
 ## [2.18.0] - 2022-05-05
 
 ### Changed
