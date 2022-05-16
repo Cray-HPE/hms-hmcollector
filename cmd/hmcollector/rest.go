@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -199,7 +199,8 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 			writeToKafka("cray-fabric-telemetry", eventsString)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricPerfTelemetry") {
 			writeToKafka("cray-fabric-perf-telemetry", eventsString)
-		} else if strings.HasPrefix(event.MessageId, "CrayFabricCritTelemetry") {
+		} else if strings.HasPrefix(event.MessageId, "CrayFabricCritTelemetry") ||
+		          strings.HasPrefix(event.MessageId, "CrayFabricCriticalTelemetry") {
 			writeToKafka("cray-fabric-crit-telemetry", eventsString)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricHealth") {
 			writeToKafka("cray-fabric-health-events", eventsString)
