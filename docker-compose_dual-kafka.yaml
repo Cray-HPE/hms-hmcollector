@@ -1,13 +1,13 @@
 version: '3'
 services:
   zookeeper1:
-    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-zookeeper:6.1.1
+    image: artifactory.algol60.net/docker.io/confluentinc/cp-zookeeper:6.1.1
     hostname: zookeeper1
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
   kafka1:
-    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-kafka:6.1.1
+    image: artifactory.algol60.net/docker.io/confluentinc/cp-kafka:6.1.1
     hostname: kafka1
     depends_on:
       - zookeeper1
@@ -20,13 +20,13 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   zookeeper2:
-    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-zookeeper:6.1.1
+    image: artifactory.algol60.net/docker.io/confluentinc/cp-zookeeper:6.1.1
     hostname: zookeeper2
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
   kafka2:
-    image: arti.dev.cray.com/third-party-docker-stable-local/confluentinc/cp-kafka:6.1.1
+    image: artifactory.algol60.net/docker.io/confluentinc/cp-kafka:6.1.1
     hostname: kafka2
     depends_on:
       - zookeeper2
