@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@ import (
 func GetEndpointList(httpClient *hms_certs.HTTPClientPair, gatewayUrl string) ([]rf.RedfishEPDescription, error) {
 	var RedfishEndpoints RedfishEndpoints
 
-	request,qerr := http.NewRequest("GET",gatewayUrl + "/hsm/v1/Inventory/RedfishEndpoints",nil)
+	request,qerr := http.NewRequest("GET",gatewayUrl + "/hsm/v2/Inventory/RedfishEndpoints",nil)
 	if (qerr != nil) {
 		return nil,fmt.Errorf("Unable to create HTTP request: %v",qerr)
 	}
