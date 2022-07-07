@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.20.0] - 2022-07-06
+
+### Changed
+
+- Changed HSM v1 API references to v2
+
 ## [2.19.0] - 2022-05-16
 
 ### Changed
