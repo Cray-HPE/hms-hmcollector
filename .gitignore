@@ -6,3 +6,11 @@ venv
 cmd/test
 configs/kafka_brokers.json
 kubernetes/.packaged
+
+# Prevent certificates from getting checked in
+*.ca
+*.cer
+*.crt
+*.csr
+*.key
+*.pem
