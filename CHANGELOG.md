@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.21.0] - 2022-07-20
+
+### Security
+
+- Removed checked in certificate.
+- Updated echo_server help information to include the steps to generate a certificate.
+
 ## [2.20.0] - 2022-07-06
 
 ### Changed
