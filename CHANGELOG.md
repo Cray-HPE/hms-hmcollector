@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.22.0] - 2022-10-05
+
+### Changed 
+
+- CASMHMS-5776: Switched over to use `ping` from the `iputils` package instead of from busybox to work around an issue
+  were busybox `ping` does not have permission when running as non-root user.
+
 ## [2.21.0] - 2022-07-20
 
 ### Security

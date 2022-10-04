@@ -70,6 +70,7 @@ RUN set -ex \
         pkgconf \
         curl \
         libcap \
+        iputils \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/hmcollector
 
 
