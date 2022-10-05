@@ -25,13 +25,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
+	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 )
@@ -120,7 +122,7 @@ func setupKafka() {
 
 	for idx, _ := range kafkaBrokers {
 		thisBroker := kafkaBrokers[idx]
-		if (strings.Contains(thisBroker.BrokerAddress,"sma.svc")) {
+		if strings.Contains(thisBroker.BrokerAddress, "sma.svc") {
 			smaBroker = thisBroker.BrokerAddress
 		}
 
@@ -156,7 +158,7 @@ func setupKafka() {
 
 	time.Sleep(1 * time.Second)
 
-	if (smaBroker == "") {
+	if smaBroker == "" {
 		logger.Error("No brokers to ping...")
 	} else {
 		logger.Info("Monitoring SMA connectivity...")
@@ -170,21 +172,34 @@ func setupKafka() {
 func monitorSMA() {
 	first := true
 
+	// Extract the hostname of the SMA kafka broker
+	smaHost := smaBroker
+	if strings.Contains(smaBroker, ":") {
+		// hostname:port was specified, need to retrieve just the hostname
+		var err error
+		smaHost, _, err = net.SplitHostPort(smaBroker)
+		if err != nil {
+			logger.Fatal("Unable to parse SMA broker host", zap.String("smaBroker", smaBroker), zap.Error(err))
+		}
+	}
+
 	for {
-		cmd := fmt.Sprintf("ping -c 1 %s > /dev/null 2>&1 && echo pingtrue || echo pingfalse",smaBroker)
-		outp,err := exec.Command("/bin/sh", "-c", cmd).Output()
-		if (err != nil) {
-			logger.Error("Error from SMA ping:",zap.Error(err))
+		cmd := fmt.Sprintf("ping -c 1 %s > /dev/null && echo pingtrue || echo pingfalse", smaHost)
+
+		result := exec.Command("/bin/sh", "-c", cmd)
+		outp, err := result.CombinedOutput()
+		if err != nil {
+			logger.Error("Error from SMA ping:", zap.Error(err))
 		} else {
-			logger.Debug("SMA Ping result:",zap.String("rslt",string(outp)))
-			if (strings.Contains(string(outp),"pingtrue")) {
+			logger.Debug("SMA Ping result:", zap.String("rslt", string(outp)), zap.String("cmd", cmd))
+			if strings.Contains(string(outp), "pingtrue") {
 				smaOK = true
 			} else {
 				smaOK = false
 			}
 
-			if (first || (smaOK != smaOKPrev)) {
-				if (smaOK) {
+			if first || (smaOK != smaOKPrev) {
+				if smaOK {
 					logger.Warn("SMA check: Connectivity OK.  Telemetry polling is running.")
 				} else {
 					logger.Warn("SMA check: Connectivity is inactive.  Telemetry polling is paused.")
@@ -197,4 +212,3 @@ func monitorSMA() {
 		time.Sleep(30 * time.Second)
 	}
 }
-
