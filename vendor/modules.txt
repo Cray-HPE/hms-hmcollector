@@ -74,6 +74,9 @@ github.com/mitchellh/mapstructure
 # github.com/namsral/flag v1.7.4-pre
 ## explicit
 github.com/namsral/flag
+# github.com/paulbellamy/ratecounter v0.2.0
+## explicit
+github.com/paulbellamy/ratecounter
 # github.com/pierrec/lz4 v2.4.1+incompatible
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32

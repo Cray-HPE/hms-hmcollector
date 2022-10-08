@@ -11,6 +11,7 @@ require (
 	github.com/Shopify/sarama v1.23.1
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/namsral/flag v1.7.4-pre
+	github.com/paulbellamy/ratecounter v0.2.0
 	github.com/rcrowley/go-metrics v0.0.0-20190706150252-9beb055b7962 // indirect
 	go.uber.org/zap v1.15.0
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.1.0
