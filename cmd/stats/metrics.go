@@ -7,6 +7,7 @@ import (
 )
 
 type Metrics struct {
+	OverallKafkaConsumerLag       int32
 	InstantKafkaMessagesPerSecond *ratecounter.RateCounter
 }
 
