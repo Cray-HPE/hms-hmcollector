@@ -74,19 +74,19 @@ var (
 	hsmRefreshInterval = flag.Int("hsm_refresh_interval", 30,
 		"The interval to check HSM for new Redfish Endpoints in seconds.")
 
-	smURL    = flag.String("sm_url", "", "Address of the State Manager.")
-	restURL  = flag.String("rest_url", "", "Address for Redfish events to target.")
-	restPort = flag.Int("rest_port", 80, "The port the REST interface listens on.")
-	caURI    = flag.String("hmcollector_ca_uri","","URI of the CA cert bundle.")
-	logInsecFailover = flag.Bool("hmcollector_log_insecure_failover",true,"Log/don't log TLS insecure failovers.")
-	httpTimeout = flag.Int("http_timeout",10,"Timeout in seconds for HTTP operations.")
+	smURL            = flag.String("sm_url", "", "Address of the State Manager.")
+	restURL          = flag.String("rest_url", "", "Address for Redfish events to target.")
+	restPort         = flag.Int("rest_port", 80, "The port the REST interface listens on.")
+	caURI            = flag.String("hmcollector_ca_uri", "", "URI of the CA cert bundle.")
+	logInsecFailover = flag.Bool("hmcollector_log_insecure_failover", true, "Log/don't log TLS insecure failovers.")
+	httpTimeout      = flag.Int("http_timeout", 10, "Timeout in seconds for HTTP operations.")
 
 	// This is really a hacky option that should only be used when incoming timestamps can't be trusted.
 	// For example, if NTP isn't working and the controllers are reporting their time as from 1970.
 	IgnoreProvidedTimestamp = flag.Bool("ignore_provided_timestamp", false,
 		"Should the collector disregard any provided timestamps and instead use a local value of NOW?")
 
-	serviceName string
+	serviceName  string
 	kafkaBrokers []*hmcollector.KafkaBroker
 
 	Running = true
@@ -96,8 +96,8 @@ var (
 
 	ctx context.Context
 
-	smdClient *hms_certs.HTTPClientPair
-	rfClient *hms_certs.HTTPClientPair
+	smdClient    *hms_certs.HTTPClientPair
+	rfClient     *hms_certs.HTTPClientPair
 	rfClientLock sync.RWMutex
 
 	atomicLevel zap.AtomicLevel
@@ -118,11 +118,6 @@ type EndpointWithCollector struct {
 	Model          string
 }
 
-type jsonPayload struct {
-	payload string
-	topic   string
-}
-
 func doUpdateHSMEndpoints() {
 	for Running {
 		// Get Redfish endpoints from HSM
@@ -136,13 +131,13 @@ func doUpdateHSMEndpoints() {
 
 				// Make sure this is a new endpoint.
 				HSMEndpointsLock.Lock()
-				_, endpointIsKnown := HSMEndpoints[newEndpoint.ID];
+				_, endpointIsKnown := HSMEndpoints[newEndpoint.ID]
 				HSMEndpointsLock.Unlock()
-				
-				if  endpointIsKnown {
+
+				if endpointIsKnown {
 					continue
 				}
-				
+
 				// No point in wasting our time trying to talk to endpoints HSM wasn't able to.
 				if newEndpoint.DiscInfo.LastStatus != "DiscoverOK" {
 					logger.Warn("Ignoring endpoint because HSM status not DiscoveredOK",
@@ -217,7 +212,7 @@ func setupLogging() {
 }
 
 // This function is used to set up an HTTP validated/non-validated client
-// pair for Redfish operations.  This is done at the start of things, and also 
+// pair for Redfish operations.  This is done at the start of things, and also
 // whenever the CA chain bundle is "rolled".
 
 func createRFClient() error {
@@ -226,26 +221,26 @@ func createRFClient() error {
 
 	//For testing/debug only.
 
-    envstr := os.Getenv("HMCOLLECTOR_CA_PKI_URL")
-    if (envstr != "") {
-        logger.Info("Using CA PKI URL: ",zap.String("",envstr))
-        hms_certs.ConfigParams.VaultCAUrl = envstr
-    }
-    envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_URL")
-    if (envstr != "") {
-        logger.Info("Using VAULT PKI URL: ",zap.String("",envstr))
-        hms_certs.ConfigParams.VaultPKIUrl = envstr
-    }
-    envstr = os.Getenv("HMCOLLECTOR_VAULT_JWT_FILE")
-    if (envstr != "") {
-        logger.Info("Using Vault JWT file: ",zap.String("",envstr))
-        hms_certs.ConfigParams.VaultJWTFile = envstr
-    }
-    envstr = os.Getenv("HMCOLLECTOR_K8S_AUTH_URL")
-    if (envstr != "") {
-        logger.Info("Using K8S AUTH URL: ",zap.String("",envstr))
-        hms_certs.ConfigParams.K8SAuthUrl = envstr
-    }
+	envstr := os.Getenv("HMCOLLECTOR_CA_PKI_URL")
+	if envstr != "" {
+		logger.Info("Using CA PKI URL: ", zap.String("", envstr))
+		hms_certs.ConfigParams.VaultCAUrl = envstr
+	}
+	envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_URL")
+	if envstr != "" {
+		logger.Info("Using VAULT PKI URL: ", zap.String("", envstr))
+		hms_certs.ConfigParams.VaultPKIUrl = envstr
+	}
+	envstr = os.Getenv("HMCOLLECTOR_VAULT_JWT_FILE")
+	if envstr != "" {
+		logger.Info("Using Vault JWT file: ", zap.String("", envstr))
+		hms_certs.ConfigParams.VaultJWTFile = envstr
+	}
+	envstr = os.Getenv("HMCOLLECTOR_K8S_AUTH_URL")
+	if envstr != "" {
+		logger.Info("Using K8S AUTH URL: ", zap.String("", envstr))
+		hms_certs.ConfigParams.K8SAuthUrl = envstr
+	}
 
 	//Wait for all reader locks to release, prevent new reader locks.  Once
 	//we acquire this lock, all RF operations are blocked until we unlock.
@@ -254,15 +249,15 @@ func createRFClient() error {
 	defer rfClientLock.Unlock()
 
 	logger.Info("All RF threads paused.")
-	if (*caURI != "") {
+	if *caURI != "" {
 		logger.Info("Creating Redfish HTTP client with CA trust bundle from",
-			zap.String("",*caURI))
+			zap.String("", *caURI))
 	} else {
 		logger.Info("Creating Redfish HTTP client without CA trust bundle.")
 	}
-	rfc,err := hms_certs.CreateRetryableHTTPClientPair(*caURI,*httpTimeout,4,10)
-	if (err != nil) {
-		return fmt.Errorf("ERROR: Can't create Redfish HTTP client: %v",err)
+	rfc, err := hms_certs.CreateRetryableHTTPClientPair(*caURI, *httpTimeout, 4, 10)
+	if err != nil {
+		return fmt.Errorf("ERROR: Can't create Redfish HTTP client: %v", err)
 	}
 
 	rfClient = rfc
@@ -272,26 +267,25 @@ func createRFClient() error {
 func caChangeCB(caBundle string) {
 	logger.Info("CA bundle rolled; waiting for all RF threads to pause...")
 	err := createRFClient()
-	if (err != nil) {
-		logger.Error("Can't create TLS-verified HTTP client pair with cert roll, using previous one: ",zap.Error(err))
+	if err != nil {
+		logger.Error("Can't create TLS-verified HTTP client pair with cert roll, using previous one: ", zap.Error(err))
 	} else {
 		logger.Info("HTTP transports/clients now set up with new CA bundle.")
 	}
 }
-
 
 func main() {
 	var err error
 
 	setupLogging()
 
-	serviceName,err = base.GetServiceInstanceName()
-	if (err != nil) {
+	serviceName, err = base.GetServiceInstanceName()
+	if err != nil {
 		serviceName = "HMCOLLECTOR"
 		logger.Error("Can't get service instance name, using ",
-				zap.String("",serviceName))
+			zap.String("", serviceName))
 	}
-	logger.Info("Service/Instance name:",zap.String("",serviceName))
+	logger.Info("Service/Instance name:", zap.String("", serviceName))
 
 	// Parse the arguments.
 	flag.Parse()
@@ -302,13 +296,13 @@ func main() {
 	ctx, cancel = context.WithCancel(context.Background())
 
 	hms_certs.ConfigParams.LogInsecureFailover = *logInsecFailover
-	hms_certs.InitInstance(nil,serviceName)
+	hms_certs.InitInstance(nil, serviceName)
 
-	// For performance reasons we'll keep the client that was created for 
+	// For performance reasons we'll keep the client that was created for
 	// this base request and reuse it later.
 
-	smdClient,err = hms_certs.CreateRetryableHTTPClientPair("",10,4,30)
-	if (err != nil) {
+	smdClient, err = hms_certs.CreateRetryableHTTPClientPair("", 10, 4, 30)
+	if err != nil {
 		panic("Can't create insecure cert HTTP client!") //should never happen!
 	}
 
@@ -317,40 +311,40 @@ func main() {
 
 	ok := false
 
-	for ix := 1; ix <= 10; ix ++ {
+	for ix := 1; ix <= 10; ix++ {
 		err := createRFClient()
-		if (err == nil) {
+		if err == nil {
 			logger.Info("Redfish HTTP client pair creation succeeded.")
 			ok = true
 			break
 		}
 
 		logger.Error("TLS-verified client pair creation failure, ",
-			zap.Int("attempt",ix),zap.Error(err))
+			zap.Int("attempt", ix), zap.Error(err))
 		time.Sleep(2 * time.Second)
 	}
 
-	if (!ok) {
+	if !ok {
 		logger.Error("Can't create secure HTTP client pair for Redfish, exhausted retries.")
 		logger.Error("   Making insecure client; Please check CA bundle URI for correctness.")
 		*caURI = ""
 		err := createRFClient()
-		if (err != nil) {
+		if err != nil {
 			//Should never happen!!
 			panic("Can't create Redfish HTTP client!!!")
 		}
 	}
 
-	if (*caURI != "") {
-		err := hms_certs.CAUpdateRegister(*caURI,caChangeCB)
-		if (err != nil) {
-            logger.Warn("Unable to register CA bundle watcher for ",
-                zap.String("URI",*caURI),zap.Error(err))
-            logger.Warn("   This means no updates when CA bundle is rolled.")
-        }
-    } else {
-       logger.Warn("No CA bundle URI specified, not watching for CA changes.")
-    }
+	if *caURI != "" {
+		err := hms_certs.CAUpdateRegister(*caURI, caChangeCB)
+		if err != nil {
+			logger.Warn("Unable to register CA bundle watcher for ",
+				zap.String("URI", *caURI), zap.Error(err))
+			logger.Warn("   This means no updates when CA bundle is rolled.")
+		}
+	} else {
+		logger.Warn("No CA bundle URI specified, not watching for CA changes.")
+	}
 
 	if *restEnabled {
 		// Only enable handling of the root URL if REST is "enabled".
