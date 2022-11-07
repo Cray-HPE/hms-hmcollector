@@ -24,6 +24,11 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.23.0] - 2022-11-07
+
+### Changed
+- CASMHMS-5824: Add a message key to kafka messages to ensure events are sent to the same Kafka partition. The message key is the BMC Xname concatenated with the Redfish Event Message ID. For example `x3000c0s11b4.EventLog.1.0.PowerStatusChange`. 
+
 ## [2.22.0] - 2022-10-05
 
 ### Changed 
