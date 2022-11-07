@@ -25,13 +25,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 )
@@ -42,7 +43,7 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 	var jsonObj map[string]interface{}
 	marshalErr := func(bb []byte, e error) {
 		err = e
-		logger.Error("Unable to unmarshal JSON payload", 
+		logger.Error("Unable to unmarshal JSON payload",
 			zap.ByteString("bodyString", bb),
 			zap.Error(e),
 		)
@@ -71,7 +72,7 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 	// The variable v is holding this info right now. We need to process each
 	// entry of this array individually, since the OriginOfCondition field may
 	// be a string rather than a JSON object.
-	
+
 	if evBytes, e := json.Marshal(v); e != nil {
 		marshalErr(bodyBytes, e)
 		return
@@ -171,43 +172,46 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 		}
 		eventsString := string(eventsBytes)
 
+		kafkaMessageKey := fmt.Sprintf("%s.%s", events.Context, event.MessageId)
+
 		// Figure out where she goes and SEND IT!
 		if strings.HasPrefix(event.MessageId, "CrayTelemetry") {
 			if strings.HasSuffix(event.MessageId, "Temperature") {
-				writeToKafka("cray-telemetry-temperature", eventsString)
+				writeToKafka("cray-telemetry-temperature", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Voltage") {
-				writeToKafka("cray-telemetry-voltage", eventsString)
+				writeToKafka("cray-telemetry-voltage", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Power") ||
 				strings.HasSuffix(event.MessageId, "Current") {
-				writeToKafka("cray-telemetry-power", eventsString)
+				writeToKafka("cray-telemetry-power", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Energy") {
-				writeToKafka("cray-telemetry-energy", eventsString)
+				writeToKafka("cray-telemetry-energy", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Fan") ||
 				strings.HasSuffix(event.MessageId, "Rotational") {
-				writeToKafka("cray-telemetry-fan", eventsString)
+				writeToKafka("cray-telemetry-fan", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Pressure") {
-				writeToKafka("cray-telemetry-pressure", eventsString)
+				writeToKafka("cray-telemetry-pressure", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "LiquidFlow") {
-				writeToKafka("cray-telemetry-liquidflow", eventsString)
+				writeToKafka("cray-telemetry-liquidflow", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Humidity") {
-				writeToKafka("cray-telemetry-humidity", eventsString)
+				writeToKafka("cray-telemetry-humidity", eventsString, &kafkaMessageKey)
 			} else {
 				logger.Error("Event MessageId has registry prefix CrayTelemetry, but the SensorType is unknown!",
 					zap.Any("event", event))
 			}
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricTelemetry") {
-			writeToKafka("cray-fabric-telemetry", eventsString)
+			writeToKafka("cray-fabric-telemetry", eventsString, &kafkaMessageKey)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricPerfTelemetry") {
-			writeToKafka("cray-fabric-perf-telemetry", eventsString)
+			writeToKafka("cray-fabric-perf-telemetry", eventsString, &kafkaMessageKey)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricCritTelemetry") ||
-		          strings.HasPrefix(event.MessageId, "CrayFabricCriticalTelemetry") {
-			writeToKafka("cray-fabric-crit-telemetry", eventsString)
+			strings.HasPrefix(event.MessageId, "CrayFabricCriticalTelemetry") {
+			writeToKafka("cray-fabric-crit-telemetry", eventsString, &kafkaMessageKey)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricHealth") {
-			writeToKafka("cray-fabric-health-events", eventsString)
+			writeToKafka("cray-fabric-health-events", eventsString, &kafkaMessageKey)
 		} else {
 			// If we get to this point then we don't have a specific topic this should go on,
 			// dump it on the generic one.
-			writeToKafka("cray-dmtf-resource-event", eventsString)
+			// TODO should normal redfish events have the message key? What about HSM services
+			writeToKafka("cray-dmtf-resource-event", eventsString, &kafkaMessageKey)
 		}
 	}
 }

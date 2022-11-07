@@ -42,11 +42,15 @@ var smaOK = false
 var smaOKPrev bool
 var smaBroker string
 
-func writeToKafka(topic string, payload string) {
+func writeToKafka(topic, payload string, messageID *string) {
 	msg := kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          []byte(payload),
 		Timestamp:      time.Now(),
+	}
+
+	if messageID != nil {
+		msg.Key = []byte(*messageID)
 	}
 
 	// Loop on array index to avoid copy overhead of range
@@ -74,12 +78,6 @@ func writeToKafka(topic string, payload string) {
 		}
 	}
 
-}
-
-func processData(jsonPayloads <-chan jsonPayload) {
-	for payload := range jsonPayloads {
-		writeToKafka(payload.topic, payload.payload)
-	}
 }
 
 func handleKafkaEvents(broker *hmcollector.KafkaBroker) {

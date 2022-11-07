@@ -30,11 +30,11 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
 	base "github.com/Cray-HPE/hms-base"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	"github.com/Cray-HPE/hms-hmcollector/internal/river_collector"
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"go.uber.org/zap"
 )
 
 var (
@@ -48,6 +48,13 @@ var (
 	nonPolledEndpoints []*rf.RedfishEPDescription
 )
 
+type jsonPayload struct {
+	context   string
+	messageId string
+	payload   string
+	topic     string
+}
+
 func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads chan<- jsonPayload) {
 	for endpoint := range pendingEndpoints {
 		endpointLogger := logger.With(zap.String("xname", endpoint.Endpoint.ID))
@@ -55,15 +62,15 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 		// If SMA is not contact-able, there's no point grabbing any of this.
 		// We'll consume the chan data but we won't act on it.
 
-		if (!smaOK) {
-			logger.Debug("SMA off, Skipping poll of ",zap.String("endpoint",endpoint.Endpoint.ID))
+		if !smaOK {
+			logger.Debug("SMA off, Skipping poll of ", zap.String("endpoint", endpoint.Endpoint.ID))
 			continue
 		}
 
 		// For HPE PDUs, there are ~55 URLs to poll for telemetry and it takes >1min
 		// to poll them all. Slow down the polling interval for just these endpoints.
 		if base.GetHMSType(endpoint.Endpoint.ID) == base.CabinetPDUController &&
-			time.Since(*endpoint.LastContacted) < (time.Second * time.Duration(*pduPollingInterval)) {
+			time.Since(*endpoint.LastContacted) < (time.Second*time.Duration(*pduPollingInterval)) {
 			continue
 		}
 
@@ -79,7 +86,7 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 					// Add a wait here to space them out a bit.
 					time.Sleep(time.Second * 1)
 				}
-				logger.Debug("collectData(): ",zap.String("Endpoint URL",fullURL))
+				logger.Debug("collectData(): ", zap.String("Endpoint URL", fullURL))
 				payloadBytes, statusCode, err := doHTTPAction(endpoint.Endpoint, http.MethodGet, fullURL, nil)
 
 				if err != nil {
@@ -99,7 +106,7 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 
 				newEvents := river_collector.GetEventsForPayload(endpoint.RiverCollector, payloadBytes, endpoint.Endpoint,
 					telemetryType)
-				logger.Debug("collectData(): ",zap.Int("num events",len(newEvents)))
+				logger.Debug("collectData(): ", zap.Int("num events", len(newEvents)))
 
 				for _, event := range newEvents {
 					var finalEvents hmcollector.Events
@@ -111,7 +118,9 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 
 					if finalEventsString != "" {
 						payload := jsonPayload{
-							payload: finalEventsString,
+							context:   endpoint.Endpoint.ID,
+							messageId: event.MessageId,
+							payload:   finalEventsString,
 						}
 
 						switch event.MessageId {
@@ -139,6 +148,13 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 				}
 			}
 		}
+	}
+}
+
+func processData(jsonPayloads <-chan jsonPayload) {
+	for payload := range jsonPayloads {
+		kafkaMessageKey := fmt.Sprintf("%s.%s", payload.context, payload.messageId)
+		writeToKafka(payload.topic, payload.payload, &kafkaMessageKey)
 	}
 }
 
@@ -270,7 +286,7 @@ func monitorPollingEndpoints() {
 						logger.Info("Found HPE PDU endpoint eligible for polling.",
 							zap.Any("endpoint", endpoint))
 						newEndpoint = &EndpointWithCollector{
-							Endpoint:       endpoint,
+							Endpoint: endpoint,
 							RiverCollector: river_collector.HPEPDURiverCollector{
 								Sensors: sensorMap,
 							},
