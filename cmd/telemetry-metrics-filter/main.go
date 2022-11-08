@@ -56,7 +56,7 @@ func setupLogging() {
 
 func main() {
 	bootStrapServers := flag.String("bootstrap_servers", "localhost:9092", "Kafka bootstrap server")
-	kakfaGroup := flag.String("kakfa_group", "hmcollector_stats", "Kafka group")
+	kakfaGroup := flag.String("kakfa_group", "telemetry-metrics-filter", "Kafka group")
 	workerCount := flag.Int("worker_count", 10, "Number of event workers")
 
 	flag.Parse()
@@ -90,7 +90,7 @@ func main() {
 	// Setup Metrics
 	metrics := NewMetrics()
 
-	// Setup the kafka consumer
+	// Retrieve the sname
 	hostname, err := os.Hostname()
 	if err != nil {
 		panic(err)
