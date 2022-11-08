@@ -26,7 +26,7 @@
 ARG LIBRDKAFKA_VER_MIN=1.1.0
 
 # Build base just has the packages installed we need.
-FROM artifactory.algol60.net/docker.io/library/golang:1.16-alpine AS build-base
+FROM artifactory.algol60.net/docker.io/library/golang:1.19-alpine AS build-base
 
 ARG LIBRDKAFKA_VER_MIN
 
