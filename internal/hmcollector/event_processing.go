@@ -1,16 +1,15 @@
-package main
+package hmcollector
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	"go.uber.org/zap"
 )
 
 // Unmarshalling events is complicated because of the fact that some redfish
 // implementations do not return events based on the redfish standard.
-func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
+func UnmarshalEvents(logger *zap.Logger, bodyBytes []byte) (events Events, err error) {
 	var jsonObj map[string]interface{}
 	marshalErr := func(bb []byte, e error) {
 		err = e
@@ -59,7 +58,7 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 				delete(ev, "OriginOfCondition")
 			}
 			tmp, e := json.Marshal(ev)
-			var tmpEvent hmcollector.Event
+			var tmpEvent Event
 			if e = json.Unmarshal(tmp, &tmpEvent); e != nil {
 				marshalErr(tmp, e)
 				return
@@ -67,7 +66,7 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 			if ok {
 				// if OriginOfCondition was a string, we need
 				// to put it into the unmarshalled event.
-				tmpEvent.OriginOfCondition = &hmcollector.ResourceID{s}
+				tmpEvent.OriginOfCondition = &ResourceID{s}
 			}
 			events.Events = append(events.Events, tmpEvent)
 		}

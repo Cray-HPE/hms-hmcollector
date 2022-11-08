@@ -2,20 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/namsral/flag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 )
 
 var (
@@ -56,7 +53,7 @@ func setupLogging() {
 
 func main() {
 	bootStrapServers := flag.String("bootstrap_servers", "localhost:9092", "Kafka bootstrap server")
-	kakfaGroup := flag.String("kakfa_group", "telemetry-metrics-filter", "Kafka group")
+	kafkaGroup := flag.String("kafka_group", "telemetry-metrics-filter", "Kafka group")
 	workerCount := flag.Int("worker_count", 10, "Number of event workers")
 
 	flag.Parse()
@@ -90,13 +87,14 @@ func main() {
 	// Setup Metrics
 	metrics := NewMetrics()
 
-	// Retrieve the sname
+	// Retrieve the hostname of the pod
 	hostname, err := os.Hostname()
 	if err != nil {
 		panic(err)
 	}
 
 	// Topics to listen on
+	// TODO read in from filter config
 	topics := []string{
 		"cray-telemetry-temperature",
 		"cray-telemetry-voltage",
@@ -133,10 +131,19 @@ func main() {
 	// Start consumers
 	var consumerWg sync.WaitGroup
 	consumerCtx, consumerCancel := context.WithCancel(context.Background())
-	go runConsumer(0, *bootStrapServers, *kakfaGroup, hostname, topics, metrics, consumerCtx, workQueue, &consumerWg)
-	// go runConsumer(1, *bootStrapServers, *kakfaGroup, hostname, topics, metrics, consumerCtx, workQueue, &consumerWg)
-	// go runConsumer(2, *bootStrapServers, *kakfaGroup, hostname, topics, metrics, consumerCtx, workQueue, &consumerWg)
-	// go runConsumer(3, *bootStrapServers, *kakfaGroup, hostname, topics, metrics, consumerCtx, workQueue, &consumerWg)
+	consumer := Consumer{
+		id:               0,
+		bootStrapServers: *bootStrapServers,
+		kafkaGroup:       *kafkaGroup,
+		hostname:         hostname,
+		topics:           topics,
+		metrics:          metrics,
+		consumerCtx:      consumerCtx,
+		workQueue:        workQueue,
+		wg:               &consumerWg,
+	}
+
+	go consumer.Start()
 
 	sig := <-sigchan
 	fmt.Printf("Caught signal %v: terminating\n", sig)
@@ -153,129 +160,4 @@ func main() {
 	workerWg.Wait()
 	logger.Info("All workers completed")
 
-}
-
-func runConsumer(id int, bootStrapServers, kakfaGroup, hostname string, topics []string, metrics *Metrics, workerCtx context.Context, workQueue chan UnparsedEventPayload, wg *sync.WaitGroup) {
-	wg.Add(1)
-
-	logger := logger.With(zap.Int("ConsumerID", id))
-
-	fmt.Printf("Connecting to kafka at %s...\n", bootStrapServers)
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":      bootStrapServers,
-		"group.id":               kakfaGroup,
-		"client.id":              fmt.Sprintf("hmcollector_stats_%s", hostname),
-		"session.timeout.ms":     6000,
-		"statistics.interval.ms": 1000,
-		"auto.offset.reset":      "latest",
-	})
-
-	if err != nil {
-		logger.Fatal("Failed to create consumer", zap.Error(err))
-	}
-
-	// Subscribe to the topics...
-	if err := c.SubscribeTopics(topics, nil); err != nil {
-		logger.Fatal("Failed to subscribe to topics", zap.Error(err))
-	}
-
-	// Main loop to pull events out of kafka
-	for {
-		select {
-		case <-workerCtx.Done():
-			logger.Info("Closing consumer")
-			c.Close()
-
-			wg.Done()
-
-			logger.Info("Consumer finished")
-
-			return
-		default:
-			ev := c.Poll(100)
-			if ev == nil {
-				continue
-			}
-
-			switch e := ev.(type) {
-			case *kafka.Message:
-				metrics.InstantKafkaMessagesPerSecond.Incr(1)
-
-				if e.TopicPartition.Topic == nil {
-					logger.Warn("Received message without a topic", zap.Any("msg", e))
-					continue
-				}
-
-				workQueue <- UnparsedEventPayload{
-					Topic:   *e.TopicPartition.Topic,
-					Payload: e.Value,
-				}
-
-				if _, err := c.Commit(); err != nil {
-					logger.Error("Failed to commit offsets", zap.Error(err))
-				}
-
-			case kafka.Error:
-				// Errors should generally be considered
-				// informational, the client will try to
-				// automatically recover.
-				// But in this example we choose to terminate
-				// the application if all brokers are down.
-				logger.Error("consumer error", zap.String("error", e.String()))
-
-				// fmt.Fprintf(os.Stderr, "%% Error: %v: %v\n", e.Code(), e)
-				// if e.Code() == kafka.ErrAllBrokersDown {
-				// 	run = false
-				// }
-			case kafka.OffsetsCommitted:
-				logger.Debug("Offsets committed", zap.Any("msg", e))
-			case *kafka.Stats:
-				// Stats events are emitted as JSON (as string).
-				// Either directly forward the JSON to your
-				// statistics collector, or convert it to a
-				// map to extract fields of interest.
-				// The definition of the statistics JSON
-				// object can be found here:
-				// https://github.com/edenhill/librdkafka/blob/master/STATISTICS.md
-
-				type kafkaPartitionStats struct {
-					ConsumerLag int `json:"consumer_lag"`
-				}
-
-				type KafkaTopicStats struct {
-					Partitions map[string]kafkaPartitionStats `json:"partitions"`
-				}
-
-				type kafkaStats struct {
-					Topics map[string]KafkaTopicStats `json:"topics"`
-				}
-
-				var stats kafkaStats
-				json.Unmarshal([]byte(e.String()), &stats)
-
-				var overallLag int32
-				for _, topic := range stats.Topics {
-					for _, parition := range topic.Partitions {
-						overallLag += int32(parition.ConsumerLag)
-					}
-				}
-
-				atomic.StoreInt32(&metrics.OverallKafkaConsumerLag, overallLag)
-
-				// o, _ := json.Marshal(stats)
-				// fmt.Println(string(o))
-				// // fmt.Printf("Stats: %v messages (%v bytes) messages consumed\n",
-				// // 	stats["rxmsgs"], stats["rxmsg_bytes"])
-				// consumerLag, err := strconv.Atoi(stats["consumer_lag"].(string))
-				// if err != nil {
-				// 	logger.Error("Failed to convert consumer_lag to int from string")
-				// }
-
-				// atomic.StoreInt32(&metrics.KafkaConsumerLag, int32(consumerLag))
-
-			default:
-				fmt.Printf("Ignored %v\n", e)
-			}
-		}
-	}
 }
