@@ -83,7 +83,7 @@ func main() {
 	//
 	// Create Workers
 	//
-	workQueue := make(chan UnparsedEventPayload)
+	workers := []Worker{}
 
 	var workerWg sync.WaitGroup
 	workerCtx, workerCancel := context.WithCancel(context.Background())
@@ -94,10 +94,11 @@ func main() {
 			id:           id,
 			logger:       logger.With(zap.Int("WorkerID", id)),
 			brokerConfig: brokerConfig,
-			workQueue:    workQueue,
+			workQueue:    make(chan UnparsedEventPayload),
 			ctx:          workerCtx,
 			wg:           &workerWg,
 		}
+		workers = append(workers, worker)
 
 		go worker.Start()
 	}
@@ -117,7 +118,7 @@ func main() {
 		hostname:     hostname,
 		brokerConfig: brokerConfig,
 		consumerCtx:  consumerCtx,
-		workQueue:    workQueue,
+		workers:      workers,
 		wg:           &consumerWg,
 	}
 

@@ -1,6 +1,6 @@
 
 {
-    "BrokerAddress": "cluster-kafka-bootstrap.sma.svc.cluster.local:9092",
+    "BrokerAddress": "localhost:9092",
     "ConsumerGroup": "telemetry-metrics-filter",
     "TopicsToFilter": {
         "cray-telemetry-temperature": {

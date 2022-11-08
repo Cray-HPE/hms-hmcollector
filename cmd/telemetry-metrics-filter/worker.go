@@ -9,8 +9,9 @@ import (
 )
 
 type UnparsedEventPayload struct {
-	Topic   string
-	Payload []byte
+	MessageKey []byte
+	Topic      string
+	PayloadRaw []byte
 }
 
 type Worker struct {
@@ -33,13 +34,14 @@ func (w *Worker) Start() {
 	for {
 		select {
 		case workUnit := <-w.workQueue:
-			logger.Debug("Received work unit", zap.Any("workUnit", workUnit))
+			logger.Debug("Received work unit", zap.ByteString("messageKey", workUnit.MessageKey), zap.String("topic", workUnit.Topic))
 			// Process the event
 
 			// Unmarshal the event json
-			events, err := hmcollector.UnmarshalEvents(logger, workUnit.Payload)
+			events, err := hmcollector.UnmarshalEvents(logger, workUnit.PayloadRaw)
 			if err != nil {
-				logger.Error("Failed to unmarshal events", zap.String("topic", workUnit.Topic), zap.ByteString("payload", workUnit.Payload))
+				logger.Error("Failed to unmarshal events", zap.String("topic", workUnit.Topic), zap.ByteString("payload", workUnit.PayloadRaw))
+				continue
 			}
 
 			// TODO process the event here

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/maphash"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -40,17 +41,17 @@ func NewConsumerMetrics() *ConsumerMetrics {
 }
 
 type Consumer struct {
-	id       int
-	hostname string
-	logger   *zap.Logger
+	id          int
+	hostname    string
+	logger      *zap.Logger
+	metrics     *ConsumerMetrics
+	consumerCtx context.Context
+	wg          *sync.WaitGroup
 
 	brokerConfig BrokerConfig
 	brokerHealth BrokerHealth
 
-	metrics     *ConsumerMetrics
-	consumerCtx context.Context
-	workQueue   chan UnparsedEventPayload
-	wg          *sync.WaitGroup
+	workers []Worker
 }
 
 func (c *Consumer) Start() {
@@ -92,6 +93,11 @@ func (c *Consumer) Start() {
 	// At this point the consumer was successfully created, but we don't know if it is healthy
 	c.brokerHealth.Status = BrokerHealthUnknown
 
+	// Generated a seed for hashing message keys
+	hashSeed := maphash.MakeSeed()
+	workerCount := uint64(len(c.workers))
+	logger.Debug("Worker count", zap.Uint64("workersCount", workerCount))
+
 	// Main loop to pull events out of kafka
 	for {
 		select {
@@ -113,20 +119,40 @@ func (c *Consumer) Start() {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
+				// Update metrics
 				c.metrics.InstantKafkaMessagesPerSecond.Incr(1)
+
+				// Update health status
 				c.brokerHealth.Status = BrokerHealthOk
 				c.brokerHealth.LastError = nil
 				c.brokerHealth.LastErrorCode = nil
 
+				// Verify the message received from kafka has a topic and key
 				if e.TopicPartition.Topic == nil {
 					logger.Warn("Received message without a topic", zap.Any("msg", e))
 					continue
 				}
 
-				// TODO there should be multiple work queues, and we route messages to the same worker.
-				c.workQueue <- UnparsedEventPayload{
-					Topic:   *e.TopicPartition.Topic,
-					Payload: e.Value,
+				// A message key is required so we can route the message to correct worker
+				// The message key could be derived if the event payload is parsed, but we would spend time
+				// in this loop parsing json which would slow down the single threaded task of pulling events
+				// from kafka.
+				// The idea of this polling loop is to do the least amount of computation for throughput. Then
+				// the workers can spend time doing the parsing async from this thread.
+				if e.Key == nil {
+					logger.Warn("Received message without a key", zap.Any("msg", e))
+					continue
+				}
+
+				// Determine which worker to send the event to.
+				workerID := maphash.Bytes(hashSeed, e.Key) % workerCount
+				logger.Debug("Sending event to worker", zap.ByteString("messageKey", e.Key), zap.Int("workerID", int(workerID)))
+
+				// Send the event
+				c.workers[workerID].workQueue <- UnparsedEventPayload{
+					MessageKey: e.Key,
+					Topic:      *e.TopicPartition.Topic,
+					PayloadRaw: e.Value,
 				}
 
 				// The kafka consumer should auto commit
@@ -142,12 +168,18 @@ func (c *Consumer) Start() {
 				// the application if all brokers are down.
 				errorString := e.String()
 				errorCodeString := e.Code().String()
-				logger.Error("Consumer error", zap.String("error", errorString), zap.Any("errorCode", errorCodeString))
 
-				// Update broker health
-				c.brokerHealth.Status = BrokerHealthError
-				c.brokerHealth.LastError = &errorString
-				c.brokerHealth.LastErrorCode = &errorCodeString
+				// Unknown topics are a "soft error", and should not cause this service to fail, so we will ignore them
+				if e.Code() == kafka.ErrUnknownTopicOrPart || e.Code() == kafka.ErrUnknownTopic {
+					logger.Warn("Unknown topic", zap.String("error", errorString), zap.Any("errorCode", errorCodeString))
+				} else {
+					logger.Error("Kafka consumer error", zap.String("error", errorString), zap.Any("errorCode", errorCodeString))
+
+					// Update broker health
+					c.brokerHealth.Status = BrokerHealthError
+					c.brokerHealth.LastError = &errorString
+					c.brokerHealth.LastErrorCode = &errorCodeString
+				}
 
 			case kafka.OffsetsCommitted:
 				logger.Debug("Offsets committed", zap.Any("msg", e))
@@ -185,6 +217,13 @@ func (c *Consumer) Start() {
 
 				atomic.StoreInt32(&c.metrics.OverallKafkaConsumerLag, overallLag)
 
+				// If we received statistics that means we have connected to kafka.
+				// If no kafka messages are being sent the kafka health status will remain in Unknown,
+				// so lets force it go to OK
+				if c.brokerHealth.Status == BrokerHealthUnknown {
+					c.brokerHealth.Status = BrokerHealthOk
+				}
+
 				// o, _ := json.Marshal(stats)
 				// fmt.Println(string(o))
 				// // fmt.Printf("Stats: %v messages (%v bytes) messages consumed\n",
@@ -197,7 +236,7 @@ func (c *Consumer) Start() {
 				// atomic.StoreInt32(&metrics.KafkaConsumerLag, int32(consumerLag))
 
 			default:
-				fmt.Printf("Ignored %v\n", e)
+				logger.Debug("Ignored kafka message", zap.Any("e", e))
 			}
 		}
 	}

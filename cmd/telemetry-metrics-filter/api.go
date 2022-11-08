@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -48,7 +47,6 @@ func (api *API) ReadinessHandler(w http.ResponseWriter, r *http.Request) {
 	// instantiated yet.
 
 	// TODO need to add a check for kafka health
-	fmt.Println(api.consumer.brokerHealth)
 	if api.consumer.brokerHealth.Status == BrokerHealthError {
 		ready = false
 	}
