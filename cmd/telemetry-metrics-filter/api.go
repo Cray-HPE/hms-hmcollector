@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -8,6 +10,8 @@ import (
 
 type API struct {
 	logger *zap.Logger
+
+	consumer *Consumer
 
 	listenString string
 }
@@ -44,6 +48,10 @@ func (api *API) ReadinessHandler(w http.ResponseWriter, r *http.Request) {
 	// instantiated yet.
 
 	// TODO need to add a check for kafka health
+	fmt.Println(api.consumer.brokerHealth)
+	if api.consumer.brokerHealth.Status == BrokerHealthError {
+		ready = false
+	}
 
 	if ready {
 		w.WriteHeader(http.StatusNoContent)
@@ -53,6 +61,20 @@ func (api *API) ReadinessHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) HealthHandler(w http.ResponseWriter, r *http.Request) {
-	// logger := api.logger
-	w.WriteHeader(http.StatusNotImplemented)
+	// TODO make the status code of this make sense??
+
+	healthResponse := map[string]interface{}{
+		"Consumer": map[string]interface{}{
+			"BrokerHealth": api.consumer.brokerHealth,
+			"Metrics": map[string]interface{}{
+				"OverallKafkaConsumerLag":       api.consumer.metrics.OverallKafkaConsumerLag,
+				"InstantKafkaMessagesPerSecond": api.consumer.metrics.InstantKafkaMessagesPerSecond.Rate(),
+			},
+			//"BrokerConfig": api.consumer.brokerConfig,
+
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(healthResponse)
 }

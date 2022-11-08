@@ -1,0 +1,37 @@
+
+{
+    "BrokerAddress": "cluster-kafka-bootstrap.sma.svc.cluster.local:9092",
+    "ConsumerGroup": "telemetry-metrics-filter",
+    "TopicsToFilter": {
+        "cray-telemetry-temperature": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-telemetry-voltage": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-telemetry-power": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-telemetry-energy": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-telemetry-fan": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-telemetry-pressure": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-fabric-telemetry": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-fabric-perf-telemetry": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-fabric-crit-telemetry": {
+            "ThrottlePeriodSeconds": 10 
+        },
+        "cray-dmtf-resource-event": {
+            "ThrottlePeriodSeconds": 10 
+        }
+    } 
+}

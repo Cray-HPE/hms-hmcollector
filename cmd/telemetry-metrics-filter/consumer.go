@@ -6,47 +6,91 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
+	"github.com/paulbellamy/ratecounter"
 	"go.uber.org/zap"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 )
 
+type BrokerHealthStatus string
+
+const (
+	BrokerHealthUnknown BrokerHealthStatus = "Unknown"
+	BrokerHealthClosed  BrokerHealthStatus = "Closed"
+	BrokerHealthError   BrokerHealthStatus = "Error"
+	BrokerHealthOk      BrokerHealthStatus = "Ok"
+)
+
+type BrokerHealth struct {
+	Status        BrokerHealthStatus `json:"Status"`
+	LastError     *string            `json:"LastError,omitempty"`
+	LastErrorCode *string            `json:"LastErrorCode,omitempty"`
+}
+
+type ConsumerMetrics struct {
+	OverallKafkaConsumerLag       int32
+	InstantKafkaMessagesPerSecond *ratecounter.RateCounter
+}
+
+func NewConsumerMetrics() *ConsumerMetrics {
+	return &ConsumerMetrics{
+		InstantKafkaMessagesPerSecond: ratecounter.NewRateCounter(1 * time.Second),
+	}
+}
+
 type Consumer struct {
-	id               int
-	logger           *zap.Logger
-	bootStrapServers string
-	kafkaGroup       string
-	hostname         string
-	topics           []string
-	metrics          *Metrics
-	consumerCtx      context.Context
-	workQueue        chan UnparsedEventPayload
-	wg               *sync.WaitGroup
+	id       int
+	hostname string
+	logger   *zap.Logger
+
+	brokerConfig BrokerConfig
+	brokerHealth BrokerHealth
+
+	metrics     *ConsumerMetrics
+	consumerCtx context.Context
+	workQueue   chan UnparsedEventPayload
+	wg          *sync.WaitGroup
 }
 
 func (c *Consumer) Start() {
 	logger := c.logger
 
 	c.wg.Add(1)
+	c.metrics = NewConsumerMetrics()
 
-	fmt.Printf("Connecting to kafka at %s...\n", c.bootStrapServers)
-	kc, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":      c.bootStrapServers,
-		"group.id":               c.kafkaGroup,
+	//
+	// Connect to kafka
+	//
+	consumerConfig := kafka.ConfigMap{
+		"bootstrap.servers":      c.brokerConfig.BrokerAddress,
+		"group.id":               c.brokerConfig.ConsumerGroup,
 		"client.id":              fmt.Sprintf("telemetry-metrics-filter_%s", c.hostname),
 		"session.timeout.ms":     6000,
 		"statistics.interval.ms": 1000,
 		"auto.offset.reset":      "latest",
-	})
+	}
+
+	logger.Info("Connecting to kafka", zap.Any("consumerConfig", consumerConfig))
+	kc, err := kafka.NewConsumer(&consumerConfig)
 
 	if err != nil {
 		logger.Fatal("Failed to create consumer", zap.Error(err))
 	}
 
 	// Subscribe to the topics...
-	if err := kc.SubscribeTopics(c.topics, nil); err != nil {
+	topics := []string{}
+	for topic := range c.brokerConfig.TopicsToFilter {
+		topics = append(topics, topic)
+	}
+
+	logger.Info("Subscripting to topics", zap.Strings("topics", topics))
+	if err := kc.SubscribeTopics(topics, nil); err != nil {
 		logger.Fatal("Failed to subscribe to topics", zap.Error(err))
 	}
+
+	// At this point the consumer was successfully created, but we don't know if it is healthy
+	c.brokerHealth.Status = BrokerHealthUnknown
 
 	// Main loop to pull events out of kafka
 	for {
@@ -54,6 +98,8 @@ func (c *Consumer) Start() {
 		case <-c.consumerCtx.Done():
 			logger.Info("Closing consumer")
 			kc.Close()
+
+			c.brokerHealth.Status = BrokerHealthClosed
 
 			logger.Info("Consumer finished")
 			c.wg.Done()
@@ -68,6 +114,9 @@ func (c *Consumer) Start() {
 			switch e := ev.(type) {
 			case *kafka.Message:
 				c.metrics.InstantKafkaMessagesPerSecond.Incr(1)
+				c.brokerHealth.Status = BrokerHealthOk
+				c.brokerHealth.LastError = nil
+				c.brokerHealth.LastErrorCode = nil
 
 				if e.TopicPartition.Topic == nil {
 					logger.Warn("Received message without a topic", zap.Any("msg", e))
@@ -91,14 +140,18 @@ func (c *Consumer) Start() {
 				// automatically recover.
 				// But in this example we choose to terminate
 				// the application if all brokers are down.
-				logger.Error("consumer error", zap.String("error", e.String()))
+				errorString := e.String()
+				errorCodeString := e.Code().String()
+				logger.Error("Consumer error", zap.String("error", errorString), zap.Any("errorCode", errorCodeString))
 
-				// fmt.Fprintf(os.Stderr, "%% Error: %v: %v\n", e.Code(), e)
-				// if e.Code() == kafka.ErrAllBrokersDown {
-				// 	run = false
-				// }
+				// Update broker health
+				c.brokerHealth.Status = BrokerHealthError
+				c.brokerHealth.LastError = &errorString
+				c.brokerHealth.LastErrorCode = &errorCodeString
+
 			case kafka.OffsetsCommitted:
 				logger.Debug("Offsets committed", zap.Any("msg", e))
+
 			case *kafka.Stats:
 				// Stats events are emitted as JSON (as string).
 				// Either directly forward the JSON to your

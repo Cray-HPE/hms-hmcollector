@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -52,15 +54,29 @@ func setupLogging() {
 }
 
 func main() {
-	bootStrapServers := flag.String("bootstrap_servers", "localhost:9092", "Kafka bootstrap server")
-	kafkaGroup := flag.String("kafka_group", "telemetry-metrics-filter", "Kafka group")
+	// Parse CLI flag configuration
+	brokerConfigFile := flag.String("broker_config_file", "./configs/telemetry-filter-broker-config.json", "Broker configuration file")
 	workerCount := flag.Int("worker_count", 10, "Number of event workers")
 	httpListenString := flag.String("http_listen", "0.0.0.0:9088", "HTTP Server listen string")
 
 	flag.Parse()
 
+	// Setup logging
 	setupLogging()
 
+	// Parse broker configuration
+	logger.Info("Parsing Broker configuration", zap.String("brokerConfigFile", *brokerConfigFile))
+	brokerConfigRaw, err := ioutil.ReadFile(*brokerConfigFile)
+	if err != nil {
+		logger.Fatal("Failed to read broker config file", zap.Error(err))
+	}
+
+	var brokerConfig BrokerConfig
+	if err := json.Unmarshal(brokerConfigRaw, &brokerConfig); err != nil {
+		logger.Fatal("Failed to unmarshal broker config file to json", zap.Error(err))
+	}
+
+	// Setup signal handler
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -75,18 +91,16 @@ func main() {
 		workerWg.Add(1)
 
 		worker := Worker{
-			id:        id,
-			logger:    logger.With(zap.Int("WorkerID", id)),
-			workQueue: workQueue,
-			ctx:       workerCtx,
-			wg:        &workerWg,
+			id:           id,
+			logger:       logger.With(zap.Int("WorkerID", id)),
+			brokerConfig: brokerConfig,
+			workQueue:    workQueue,
+			ctx:          workerCtx,
+			wg:           &workerWg,
 		}
 
 		go worker.Start()
 	}
-
-	// Setup Metrics
-	metrics := NewMetrics()
 
 	// Retrieve the hostname of the pod
 	hostname, err := os.Hostname()
@@ -94,26 +108,32 @@ func main() {
 		panic(err)
 	}
 
-	// Topics to listen on
-	// TODO read in from filter config
-	topics := []string{
-		"cray-telemetry-temperature",
-		"cray-telemetry-voltage",
-		"cray-telemetry-power",
-		"cray-telemetry-energy",
-		"cray-telemetry-fan",
-		"cray-telemetry-pressure",
-		"cray-telemetry-humidity",
-		"cray-telemetry-liquidflow",
-		"cray-fabric-telemetry",
-		"cray-fabric-perf-telemetry",
-		"cray-fabric-crit-telemetry",
-		"cray-dmtf-resource-event",
+	// Start consumers
+	var consumerWg sync.WaitGroup
+	consumerCtx, consumerCancel := context.WithCancel(context.Background())
+	consumer := Consumer{
+		id:           0,
+		logger:       logger.With(zap.Int("ConsumerID", 0)),
+		hostname:     hostname,
+		brokerConfig: brokerConfig,
+		consumerCtx:  consumerCtx,
+		workQueue:    workQueue,
+		wg:           &consumerWg,
 	}
+
+	go consumer.Start()
+
+	// Start REST API
+	api := API{
+		logger:       logger.With(zap.Int("ApiID", 0)), // I don't like this name
+		consumer:     &consumer,
+		listenString: *httpListenString,
+	}
+	go api.Start()
 
 	// Metrics output loop
 	go func() {
-		ticker := time.NewTicker(1000 * time.Millisecond)
+		ticker := time.NewTicker(5 * time.Second)
 
 		for {
 			select {
@@ -122,37 +142,12 @@ func main() {
 				return
 			case <-ticker.C:
 				logger.Info("Metrics",
-					zap.Int64("InstantKafkaMessagesPerSecond", metrics.InstantKafkaMessagesPerSecond.Rate()),
-					zap.Int32("OverallKafkaConsumerLag", metrics.OverallKafkaConsumerLag),
+					zap.Int64("InstantKafkaMessagesPerSecond", consumer.metrics.InstantKafkaMessagesPerSecond.Rate()),
+					zap.Int32("OverallKafkaConsumerLag", consumer.metrics.OverallKafkaConsumerLag),
 				)
 			}
 		}
 	}()
-
-	// Start consumers
-	var consumerWg sync.WaitGroup
-	consumerCtx, consumerCancel := context.WithCancel(context.Background())
-	consumer := Consumer{
-		id:               0,
-		logger:           logger.With(zap.Int("ConsumerID", 0)),
-		bootStrapServers: *bootStrapServers,
-		kafkaGroup:       *kafkaGroup,
-		hostname:         hostname,
-		topics:           topics,
-		metrics:          metrics,
-		consumerCtx:      consumerCtx,
-		workQueue:        workQueue,
-		wg:               &consumerWg,
-	}
-
-	go consumer.Start()
-
-	// Start API
-	api := API{
-		logger:       logger.With(zap.Int("ApiID", 0)), // I don't like this name
-		listenString: *httpListenString,
-	}
-	go api.Start()
 
 	sig := <-sigchan
 	fmt.Printf("Caught signal %v: terminating\n", sig)

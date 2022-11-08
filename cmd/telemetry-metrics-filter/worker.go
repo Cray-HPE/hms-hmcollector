@@ -17,6 +17,8 @@ type Worker struct {
 	id     int
 	logger *zap.Logger
 
+	brokerConfig BrokerConfig
+
 	workQueue chan UnparsedEventPayload
 	ctx       context.Context
 
