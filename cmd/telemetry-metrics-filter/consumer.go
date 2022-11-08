@@ -69,6 +69,7 @@ func (c *Consumer) Start() {
 		"client.id":              fmt.Sprintf("telemetry-metrics-filter_%s", c.hostname),
 		"session.timeout.ms":     6000,
 		"statistics.interval.ms": 1000,
+		"enable.auto.commit":     true,
 		"auto.offset.reset":      "latest",
 	}
 

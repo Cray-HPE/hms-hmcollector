@@ -1,12 +1,13 @@
 package main
 
 type BrokerConfig struct {
-	BrokerAddress  string                 `json:"BrokerAddress"`
-	ConsumerGroup  string                 `json:"ConsumerGroup"`
-	TopicsToFilter map[string]TopicFilter `json:"TopicsToFilter"`
+	BrokerAddress       string                       `json:"BrokerAddress"`
+	ConsumerGroup       string                       `json:"ConsumerGroup"`
+	FilteredTopicSuffix string                       `json:"FilteredTopicSuffix"`
+	TopicsToFilter      map[string]TopicFilterConfig `json:"TopicsToFilter"`
 }
 
-type TopicFilter struct {
+type TopicFilterConfig struct {
 	ThrottlePeriodSeconds int     `json:"ThrottlePeriodSeconds"`
 	DestinationTopicName  *string `json:"DestinationTopicName"`
 }

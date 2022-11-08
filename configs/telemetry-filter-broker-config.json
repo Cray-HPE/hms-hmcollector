@@ -2,6 +2,7 @@
 {
     "BrokerAddress": "localhost:9092",
     "ConsumerGroup": "telemetry-metrics-filter",
+    "FilteredTopicSuffix": "-filtered",
     "TopicsToFilter": {
         "cray-telemetry-temperature": {
             "ThrottlePeriodSeconds": 10 

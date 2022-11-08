@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
-
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"net/http"
 )
 
 type API struct {
@@ -22,6 +22,7 @@ func (api *API) Start() {
 	http.HandleFunc("/liveness", api.LivenessHandler)
 	http.HandleFunc("/readiness", api.ReadinessHandler)
 	http.HandleFunc("/health", api.HealthHandler)
+	http.Handle("/metrics", promhttp.Handler())
 
 	// Start HTTP server
 	logger.Info("Starting HTTP server", zap.String("listenAddress", api.listenString))
