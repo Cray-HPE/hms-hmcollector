@@ -51,7 +51,8 @@ COPY vendor     $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/vendor
 FROM base AS builder
 
 RUN set -ex \
-    && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
+    && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector \
+    && go build -v -o /usr/local/bin/telemetry-metrics-filter github.com/Cray-HPE/hms-hmcollector/cmd/telemetry-metrics-filter
 
 ## Final Stage ###
 
@@ -62,12 +63,12 @@ EXPOSE 80
 ARG LIBRDKAFKA_VER_MIN
 
 COPY --from=builder /usr/local/bin/hmcollector /usr/local/bin
+COPY --from=builder /usr/local/bin/telemetry-metrics-filter /usr/local/bin
 
 RUN set -ex \
-    && apk -U upgrade \
+    && apk -U upgrade --no-cache \
     && apk add --no-cache \
-        "librdkafka-dev>${LIBRDKAFKA_VER_MIN}" \
-        pkgconf \
+        "librdkafka>${LIBRDKAFKA_VER_MIN}" \
         curl \
         libcap \
         iputils \
