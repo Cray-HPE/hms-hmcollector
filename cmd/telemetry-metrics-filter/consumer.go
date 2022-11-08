@@ -13,6 +13,7 @@ import (
 
 type Consumer struct {
 	id               int
+	logger           *zap.Logger
 	bootStrapServers string
 	kafkaGroup       string
 	hostname         string
@@ -24,9 +25,9 @@ type Consumer struct {
 }
 
 func (c *Consumer) Start() {
-	c.wg.Add(1)
+	logger := c.logger
 
-	logger := logger.With(zap.Int("ConsumerID", c.id))
+	c.wg.Add(1)
 
 	fmt.Printf("Connecting to kafka at %s...\n", c.bootStrapServers)
 	kc, err := kafka.NewConsumer(&kafka.ConfigMap{

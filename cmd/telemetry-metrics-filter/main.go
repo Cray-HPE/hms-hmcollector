@@ -55,6 +55,7 @@ func main() {
 	bootStrapServers := flag.String("bootstrap_servers", "localhost:9092", "Kafka bootstrap server")
 	kafkaGroup := flag.String("kafka_group", "telemetry-metrics-filter", "Kafka group")
 	workerCount := flag.Int("worker_count", 10, "Number of event workers")
+	httpListenString := flag.String("http_listen", "0.0.0.0:9088", "HTTP Server listen string")
 
 	flag.Parse()
 
@@ -133,6 +134,7 @@ func main() {
 	consumerCtx, consumerCancel := context.WithCancel(context.Background())
 	consumer := Consumer{
 		id:               0,
+		logger:           logger.With(zap.Int("ConsumerID", 0)),
 		bootStrapServers: *bootStrapServers,
 		kafkaGroup:       *kafkaGroup,
 		hostname:         hostname,
@@ -144,6 +146,13 @@ func main() {
 	}
 
 	go consumer.Start()
+
+	// Start API
+	api := API{
+		logger:       logger.With(zap.Int("ApiID", 0)), // I don't like this name
+		listenString: *httpListenString,
+	}
+	go api.Start()
 
 	sig := <-sigchan
 	fmt.Printf("Caught signal %v: terminating\n", sig)
