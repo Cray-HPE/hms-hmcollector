@@ -157,10 +157,13 @@ func main() {
 
 	go consumer.Start()
 
+	//
 	// Start REST API
+	//
 	api := API{
 		logger:       logger.With(zap.Int("ApiID", 0)), // I don't like this name
 		consumer:     consumer,
+		workers:      workers,
 		producer:     producer,
 		listenString: *httpListenString,
 	}

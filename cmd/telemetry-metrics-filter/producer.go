@@ -65,6 +65,8 @@ func (p *Producer) Start() {
 
 		for {
 			select {
+			// TODO right now I don't have a context for a producer. It doesn't really matter in the long run if we don't explicitly
+			// end this loop.
 			// case <-p.consumerCtx.Done():
 			// 	logger.Info("Metrics loop is done")
 			// 	return

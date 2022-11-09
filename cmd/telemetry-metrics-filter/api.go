@@ -13,6 +13,7 @@ type API struct {
 	logger *zap.Logger
 
 	consumer *Consumer
+	workers  []*Worker
 	producer *Producer
 
 	listenString string
@@ -25,6 +26,7 @@ func (api *API) Start() {
 	http.HandleFunc("/liveness", api.LivenessHandler)
 	http.HandleFunc("/readiness", api.ReadinessHandler)
 	http.HandleFunc("/health", api.HealthHandler)
+	http.HandleFunc("/health/workers", api.HealthWorkersHandler)
 	http.Handle("/metrics", promhttp.Handler())
 
 	// Start HTTP server
@@ -54,6 +56,9 @@ func (api *API) ReadinessHandler(w http.ResponseWriter, r *http.Request) {
 	if api.consumer.brokerHealth.Status == BrokerHealthError {
 		ready = false
 	}
+	if api.producer.brokerHealth.Status == BrokerHealthError {
+		ready = false
+	}
 
 	if ready {
 		w.WriteHeader(http.StatusNoContent)
@@ -74,6 +79,7 @@ func (api *API) HealthHandler(w http.ResponseWriter, r *http.Request) {
 				"InstantKafkaMessagesPerSecond": api.consumer.metrics.InstantKafkaMessagesPerSecond.Rate(),
 			},
 		},
+		"WorkerAggregate": BuildWorkerAggregateMetrics(api.workers),
 		"Producer": map[string]interface{}{
 			"BrokerHealth": api.producer.brokerHealth,
 			"Metrics": map[string]interface{}{
@@ -86,4 +92,21 @@ func (api *API) HealthHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(healthResponse)
+}
+
+func (api *API) HealthWorkersHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO make the status code of this make sense??
+
+	workersHealth := map[int]interface{}{}
+	for _, worker := range api.workers {
+		workerMetrics := map[string]interface{}{}
+		workerMetrics["ReceivedMessages"] = atomic.LoadUint64(&worker.metrics.ReceivedMessages)
+		workerMetrics["SentMessaged"] = atomic.LoadUint64(&worker.metrics.SentMessaged)
+		workerMetrics["ThrottledMessaged"] = atomic.LoadUint64(&worker.metrics.ThrottledMessaged)
+		workerMetrics["MalformedMessaged"] = atomic.LoadUint64(&worker.metrics.MalformedMessaged)
+		workersHealth[worker.id] = workerMetrics
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(workersHealth)
 }
