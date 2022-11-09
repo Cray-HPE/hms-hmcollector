@@ -72,6 +72,7 @@ RUN set -ex \
         curl \
         libcap \
         iputils \
+        jq \
     && setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/hmcollector
 
 
