@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/namsral/flag"
 	"go.uber.org/zap"
@@ -166,24 +165,6 @@ func main() {
 		listenString: *httpListenString,
 	}
 	go api.Start()
-
-	// Metrics output loop
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-
-		for {
-			select {
-			case <-workerCtx.Done():
-				logger.Info("Metrics loop is done")
-				return
-			case <-ticker.C:
-				logger.Info("Metrics",
-					zap.Int64("InstantKafkaMessagesPerSecond", consumer.metrics.InstantKafkaMessagesPerSecond.Rate()),
-					zap.Int32("OverallKafkaConsumerLag", consumer.metrics.OverallKafkaConsumerLag),
-				)
-			}
-		}
-	}()
 
 	sig := <-sigchan
 	fmt.Printf("Caught signal %v: terminating\n", sig)

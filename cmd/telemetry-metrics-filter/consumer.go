@@ -86,6 +86,26 @@ func (c *Consumer) Start() {
 	workerCount := uint64(len(c.workers))
 	logger.Debug("Worker count", zap.Uint64("workersCount", workerCount))
 
+	// Start metrics routine
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+
+		for {
+			select {
+			case <-c.consumerCtx.Done():
+				logger.Info("Metrics loop is done")
+				return
+			case <-ticker.C:
+				logger.Info("Metrics",
+					zap.Uint64("ConsumedMessages", atomic.LoadUint64(&c.metrics.ConsumedMessages)),
+					zap.Uint64("MalformedConsumedMessages", atomic.LoadUint64(&c.metrics.MalformedConsumedMessages)),
+					zap.Int32("OverallKafkaConsumerLag", atomic.LoadInt32(&c.metrics.OverallKafkaConsumerLag)),
+					zap.Int64("InstantKafkaMessagesPerSecond", c.metrics.InstantKafkaMessagesPerSecond.Rate()),
+				)
+			}
+		}
+	}()
+
 	// Main loop to pull events out of kafka
 	for {
 		select {

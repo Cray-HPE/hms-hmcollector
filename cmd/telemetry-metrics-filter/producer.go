@@ -40,7 +40,7 @@ func (p *Producer) Initialize() {
 	p.metrics = NewProducerMetrics()
 
 	// Create the kafka producer
-	logger.Info("Creating producer")
+	logger.Info("Initializing producer")
 	var err error
 	p.producer, err = kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": p.brokerConfig.BrokerAddress,
@@ -58,6 +58,25 @@ func (p *Producer) Start() {
 	// defer p.wg.Done()
 	logger := p.logger
 	logger.Info("Starting producer")
+
+	// Start metrics loop
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+
+		for {
+			select {
+			// case <-p.consumerCtx.Done():
+			// 	logger.Info("Metrics loop is done")
+			// 	return
+			case <-ticker.C:
+				logger.Info("Metrics",
+					zap.Uint64("ProducedMessages", atomic.LoadUint64(&p.metrics.ProducedMessages)),
+					zap.Uint64("FailedToProduceMessages", atomic.LoadUint64(&p.metrics.FailedToProduceMessages)),
+					zap.Int64("InstantKafkaMessagesPerSecond", p.metrics.InstantKafkaMessagesPerSecond.Rate()),
+				)
+			}
+		}
+	}()
 
 	// Handle events from the producer
 	for event := range p.producer.Events() {
