@@ -14,22 +14,9 @@ import (
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 )
 
-type BrokerHealthStatus string
-
-const (
-	BrokerHealthUnknown BrokerHealthStatus = "Unknown"
-	BrokerHealthClosed  BrokerHealthStatus = "Closed"
-	BrokerHealthError   BrokerHealthStatus = "Error"
-	BrokerHealthOk      BrokerHealthStatus = "Ok"
-)
-
-type BrokerHealth struct {
-	Status        BrokerHealthStatus `json:"Status"`
-	LastError     *string            `json:"LastError,omitempty"`
-	LastErrorCode *string            `json:"LastErrorCode,omitempty"`
-}
-
 type ConsumerMetrics struct {
+	ConsumedMessages              uint64
+	MalformedConsumedMessages     uint64
 	OverallKafkaConsumerLag       int32
 	InstantKafkaMessagesPerSecond *ratecounter.RateCounter
 }
@@ -51,7 +38,7 @@ type Consumer struct {
 	brokerConfig BrokerConfig
 	brokerHealth BrokerHealth
 
-	workers []Worker
+	workers []*Worker
 }
 
 func (c *Consumer) Start() {
@@ -122,6 +109,7 @@ func (c *Consumer) Start() {
 			case *kafka.Message:
 				// Update metrics
 				c.metrics.InstantKafkaMessagesPerSecond.Incr(1)
+				atomic.AddUint64(&c.metrics.ConsumedMessages, 1)
 
 				// Update health status
 				c.brokerHealth.Status = BrokerHealthOk
@@ -131,6 +119,7 @@ func (c *Consumer) Start() {
 				// Verify the message received from kafka has a topic and key
 				if e.TopicPartition.Topic == nil {
 					logger.Warn("Received message without a topic", zap.Any("msg", e))
+					atomic.AddUint64(&c.metrics.MalformedConsumedMessages, 1)
 					continue
 				}
 

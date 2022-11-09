@@ -17,6 +17,21 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+type BrokerHealthStatus string
+
+const (
+	BrokerHealthUnknown BrokerHealthStatus = "Unknown"
+	BrokerHealthClosed  BrokerHealthStatus = "Closed"
+	BrokerHealthError   BrokerHealthStatus = "Error"
+	BrokerHealthOk      BrokerHealthStatus = "Ok"
+)
+
+type BrokerHealth struct {
+	Status        BrokerHealthStatus `json:"Status"`
+	LastError     *string            `json:"LastError,omitempty"`
+	LastErrorCode *string            `json:"LastErrorCode,omitempty"`
+}
+
 var (
 	logger      *zap.Logger
 	atomicLevel zap.AtomicLevel
@@ -80,39 +95,58 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	//
-	// Create Workers
-	//
-	workers := []Worker{}
-
-	var workerWg sync.WaitGroup
-	workerCtx, workerCancel := context.WithCancel(context.Background())
-	for id := 0; id < *workerCount; id++ {
-		workerWg.Add(1)
-
-		worker := Worker{
-			id:           id,
-			logger:       logger.With(zap.Int("WorkerID", id)),
-			brokerConfig: brokerConfig,
-			workQueue:    make(chan UnparsedEventPayload),
-			ctx:          workerCtx,
-			wg:           &workerWg,
-		}
-		workers = append(workers, worker)
-
-		go worker.Start()
-	}
-
 	// Retrieve the hostname of the pod
 	hostname, err := os.Hostname()
 	if err != nil {
 		panic(err)
 	}
 
-	// Start consumers
+	//
+	// Start producer
+	//
+	// var producerWg sync.WaitGroup
+	// producerCtx, producerCancel := context.WithCancel(context.Background())
+	// producerWg.Add(1)
+	producer := &Producer{
+		id:           0,
+		logger:       logger.With(zap.Int("ProducerID", 0)),
+		brokerConfig: brokerConfig,
+
+		// ctx: producerCtx,
+		// wg:  &producerWg,
+	}
+
+	producer.Initialize()
+	go producer.Start()
+
+	//
+	// Create Worker(s)
+	//
+	workers := []*Worker{}
+
+	var workerWg sync.WaitGroup
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	for id := 0; id < *workerCount; id++ {
+		worker := &Worker{
+			id:           id,
+			logger:       logger.With(zap.Int("WorkerID", id)),
+			brokerConfig: brokerConfig,
+			workQueue:    make(chan UnparsedEventPayload),
+			ctx:          workerCtx,
+			wg:           &workerWg,
+			producer:     producer,
+		}
+		workers = append(workers, worker)
+
+		go worker.Start()
+	}
+
+	//
+	// Start consumer
+	//
 	var consumerWg sync.WaitGroup
 	consumerCtx, consumerCancel := context.WithCancel(context.Background())
-	consumer := Consumer{
+	consumer := &Consumer{
 		id:           0,
 		logger:       logger.With(zap.Int("ConsumerID", 0)),
 		hostname:     hostname,
@@ -127,7 +161,8 @@ func main() {
 	// Start REST API
 	api := API{
 		logger:       logger.With(zap.Int("ApiID", 0)), // I don't like this name
-		consumer:     &consumer,
+		consumer:     consumer,
+		producer:     producer,
 		listenString: *httpListenString,
 	}
 	go api.Start()
@@ -165,4 +200,9 @@ func main() {
 	workerWg.Wait()
 	logger.Info("All workers completed")
 
+	// Stop the producer
+	// logger.Info("Stopping producers")
+	// producerCancel()
+	// producerWg.Wait()
+	// logger.Info("All producers completed")
 }

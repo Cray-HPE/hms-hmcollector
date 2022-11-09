@@ -2,15 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
+	"sync/atomic"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type API struct {
 	logger *zap.Logger
 
 	consumer *Consumer
+	producer *Producer
 
 	listenString string
 }
@@ -61,16 +64,23 @@ func (api *API) ReadinessHandler(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO make the status code of this make sense??
-
 	healthResponse := map[string]interface{}{
 		"Consumer": map[string]interface{}{
 			"BrokerHealth": api.consumer.brokerHealth,
 			"Metrics": map[string]interface{}{
-				"OverallKafkaConsumerLag":       api.consumer.metrics.OverallKafkaConsumerLag,
+				"ConsumedMessages":              atomic.LoadUint64(&api.consumer.metrics.ConsumedMessages),
+				"MalformedConsumedMessages":     atomic.LoadUint64(&api.consumer.metrics.MalformedConsumedMessages),
+				"OverallKafkaConsumerLag":       atomic.LoadInt32(&api.consumer.metrics.OverallKafkaConsumerLag),
 				"InstantKafkaMessagesPerSecond": api.consumer.metrics.InstantKafkaMessagesPerSecond.Rate(),
 			},
-			//"BrokerConfig": api.consumer.brokerConfig,
-
+		},
+		"Producer": map[string]interface{}{
+			"BrokerHealth": api.producer.brokerHealth,
+			"Metrics": map[string]interface{}{
+				"ProducedMessages":              atomic.LoadUint64(&api.producer.metrics.ProducedMessages),
+				"FailedToProduceMessages":       atomic.LoadUint64(&api.producer.metrics.FailedToProduceMessages),
+				"InstantKafkaMessagesPerSecond": api.producer.metrics.InstantKafkaMessagesPerSecond.Rate(),
+			},
 		},
 	}
 

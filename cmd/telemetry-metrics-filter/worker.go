@@ -26,11 +26,15 @@ type Worker struct {
 	wg        *sync.WaitGroup
 
 	brokerConfig BrokerConfig
-	metrics      *WorkerMetrics
+
+	metrics  *WorkerMetrics
+	producer *Producer
 }
 
 func (w *Worker) Start() {
+	w.wg.Add(1)
 	defer w.wg.Done()
+
 	logger := w.logger
 	logger.Info("Starting worker")
 
@@ -38,8 +42,15 @@ func (w *Worker) Start() {
 
 	// Setup topic filter
 	topicFilters := map[string]*TopicFilter{}
+	destinationTopics := map[string]string{}
 	for topic, filterConfig := range w.brokerConfig.TopicsToFilter {
 		topicFilters[topic] = NewTopicFilter(logger, time.Second*time.Duration(filterConfig.ThrottlePeriodSeconds))
+		destinationTopic := topic + w.brokerConfig.FilteredTopicSuffix
+		if filterConfig.DestinationTopicName != nil {
+			destinationTopic = *filterConfig.DestinationTopicName
+		}
+
+		destinationTopics[topic] = destinationTopic
 	}
 
 	// TODO add some metrics to see when the last time a BMC sent a telemetry type
@@ -72,8 +83,20 @@ func (w *Worker) Start() {
 			} else {
 				logger.Debug("Sending message", zap.ByteString("messageKey", workUnit.MessageKey), zap.String("topic", workUnit.Topic))
 
-				// TODO determine filtered topic name
-				// TODO send event to kafka
+				// Determine filtered topic name
+				destinationTopic, ok := destinationTopics[workUnit.Topic]
+				if !ok {
+					// Somehow we got a event for a topic that wasn't subscripted for. This should never happen
+					logger.Error("No destination filter for topic", zap.String("topic", workUnit.Topic))
+					continue
+				}
+
+				// Send event to kafka
+				err = w.producer.Produce(destinationTopic, workUnit.PayloadRaw)
+				if err != nil {
+					// TODO log producer errors?? How?
+					logger.Error("Failed to produce message", zap.Error(err))
+				}
 			}
 
 		case <-w.ctx.Done():
