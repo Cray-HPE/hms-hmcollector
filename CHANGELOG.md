@@ -23,6 +23,10 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.24.0] - 2023-01-10
+
+### Added
+- CASMSMF-7120: Added support for Cray Fabric Health Telemetry collection.
 
 ## [2.23.0] - 2022-11-07
 
