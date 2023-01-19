@@ -23,6 +23,11 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.25.0] - 2023-01-19
+
+### Changed
+- CASMSMF-7120: Update for Cray Fabric Health Telemetry and Events to be sent to a common kafka topic cray-fabric-health instead of cray-fabric-health-events and cray-fabric-health-telemetry.
+
 ## [2.24.0] - 2023-01-10
 
 ### Added

@@ -206,9 +206,7 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 			strings.HasPrefix(event.MessageId, "CrayFabricCriticalTelemetry") {
 			writeToKafka("cray-fabric-crit-telemetry", eventsString, &kafkaMessageKey)
 		} else if strings.HasPrefix(event.MessageId, "CrayFabricHealth") {
-			writeToKafka("cray-fabric-health-events", eventsString, &kafkaMessageKey)
-                } else if strings.HasPrefix(event.MessageId, "CrayAlerts") {
-			writeToKafka("cray-fabric-health-telemetry", eventsString, &kafkaMessageKey)
+			writeToKafka("cray-fabric-health", eventsString, &kafkaMessageKey)
 		} else {
 			// If we get to this point then we don't have a specific topic this should go on,
 			// dump it on the generic one.
