@@ -23,6 +23,11 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.26.0] - 2023-04-19
+
+### Changed
+- CASMHMS-5685 - Changed to prune event subscriptions with stale destinations. Stale subscriptions happen when hardware is physically moved.
+
 ## [2.25.0] - 2023-01-19
 
 ### Changed

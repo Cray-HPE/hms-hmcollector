@@ -180,7 +180,7 @@ func doUpdateHSMEndpoints() {
 	logger.Info("HSM endpoint monitoring routine shutdown.")
 }
 
-func setupLogging() {
+func SetupLogging() {
 	logLevel := os.Getenv("LOG_LEVEL")
 	logLevel = strings.ToUpper(logLevel)
 
@@ -277,7 +277,7 @@ func caChangeCB(caBundle string) {
 func main() {
 	var err error
 
-	setupLogging()
+	SetupLogging()
 
 	serviceName, err = base.GetServiceInstanceName()
 	if err != nil {
