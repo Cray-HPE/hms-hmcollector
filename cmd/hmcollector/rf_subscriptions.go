@@ -118,6 +118,10 @@ func postRFSubscription(endpoint *rf.RedfishEPDescription, evTypes []string, reg
 }
 
 func isSubscriptionForWrongXname(xname string, eventSub *hmcollector.EventSubscription) bool {
+	if !*pruneOldSubscriptions {
+		return false
+	}
+
 	if xnametypes.GetHMSType(xname) == xnametypes.HMSTypeInvalid {
 		logger.Debug("The endpoint ID is unexpectedly not an xname when checking for stale subscriptions.",
 			zap.Any("xname", xname))
@@ -287,7 +291,8 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 				return match, nil
 			}
 		} else {
-			if isSubscriptionForWrongXname(endpoint.ID, &eventSub) {
+			if *pruneOldSubscriptions &&
+				isSubscriptionForWrongXname(endpoint.ID, &eventSub) {
 				deleteSubscriptionForWrongXname(endpoint, sub.OId, &eventSub)
 			}
 		}
@@ -446,21 +451,23 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
 			}
 
-			subscriptions, err := getSubscriptions(sub.Endpoint)
-			if err != nil {
-				logger.Error("Unable to get subscriptions!", zap.String("xname", sub.Endpoint.ID), zap.Error(err))
-			} else {
-				for _, member := range subscriptions.Members {
-					eventSub, err := getSubscription(sub.Endpoint, member.OId)
-					if err != nil {
-						logger.Error("Unable to get subscription!",
-							zap.String("xname", sub.Endpoint.ID),
-							zap.String("id", member.OId),
-							zap.Error(err))
-						continue
-					}
-					if isSubscriptionForWrongXname(sub.Endpoint.ID, eventSub) {
-						deleteSubscriptionForWrongXname(sub.Endpoint, member.OId, eventSub)
+			if *pruneOldSubscriptions {
+				subscriptions, err := getSubscriptions(sub.Endpoint)
+				if err != nil {
+					logger.Error("Unable to get subscriptions!", zap.String("xname", sub.Endpoint.ID), zap.Error(err))
+				} else {
+					for _, member := range subscriptions.Members {
+						eventSub, err := getSubscription(sub.Endpoint, member.OId)
+						if err != nil {
+							logger.Error("Unable to get subscription!",
+								zap.String("xname", sub.Endpoint.ID),
+								zap.String("id", member.OId),
+								zap.Error(err))
+							continue
+						}
+						if isSubscriptionForWrongXname(sub.Endpoint.ID, eventSub) {
+							deleteSubscriptionForWrongXname(sub.Endpoint, member.OId, eventSub)
+						}
 					}
 				}
 			}

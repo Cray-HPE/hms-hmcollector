@@ -69,6 +69,8 @@ var (
 	kafkaBrokersConfigFile = flag.String("kafka_brokers_config", "configs/kafka_brokers.json",
 		"Path to the configuration file containing all of the Kafka brokers this collector should produce to.")
 
+	pruneOldSubscriptions = flag.Bool("prune_old_subscriptions", true, "Should it prune old subscriptions that contain the wrong xname when compared to the endpoint.")
+
 	pollingInterval    = flag.Int("polling_interval", 10, "The polling interval to use in seconds.")
 	pduPollingInterval = flag.Int("pdu_polling_interval", 30, "The polling interval to use for redfish PDUs in seconds.")
 	hsmRefreshInterval = flag.Int("hsm_refresh_interval", 30,
