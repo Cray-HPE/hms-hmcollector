@@ -69,6 +69,8 @@ var (
 	kafkaBrokersConfigFile = flag.String("kafka_brokers_config", "configs/kafka_brokers.json",
 		"Path to the configuration file containing all of the Kafka brokers this collector should produce to.")
 
+	pruneOldSubscriptions = flag.Bool("prune_old_subscriptions", true, "Should it prune old subscriptions that contain the wrong xname when compared to the endpoint.")
+
 	pollingInterval    = flag.Int("polling_interval", 10, "The polling interval to use in seconds.")
 	pduPollingInterval = flag.Int("pdu_polling_interval", 30, "The polling interval to use for redfish PDUs in seconds.")
 	hsmRefreshInterval = flag.Int("hsm_refresh_interval", 30,
@@ -180,7 +182,7 @@ func doUpdateHSMEndpoints() {
 	logger.Info("HSM endpoint monitoring routine shutdown.")
 }
 
-func setupLogging() {
+func SetupLogging() {
 	logLevel := os.Getenv("LOG_LEVEL")
 	logLevel = strings.ToUpper(logLevel)
 
@@ -277,7 +279,7 @@ func caChangeCB(caBundle string) {
 func main() {
 	var err error
 
-	setupLogging()
+	SetupLogging()
 
 	serviceName, err = base.GetServiceInstanceName()
 	if err != nil {

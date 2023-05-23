@@ -25,10 +25,13 @@ NAME ?= hms-hmcollector
 VERSION ?= $(shell cat .version)
 DOCKER_IMAGE ?= ${NAME}:${VERSION}
 
-all: image snyk
+all: image unittest snyk
 
 image:
 	docker build ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
+
+unittest:
+	docker build -f Dockerfile.testing ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}-unittest:${VERSION}' .
 
 snyk:
 	./runSnyk.sh

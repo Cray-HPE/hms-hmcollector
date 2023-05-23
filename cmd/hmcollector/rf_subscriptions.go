@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2023] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,7 @@ import (
 	base "github.com/Cray-HPE/hms-base"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 )
 
@@ -116,6 +117,104 @@ func postRFSubscription(endpoint *rf.RedfishEPDescription, evTypes []string, reg
 	return subscribed, err
 }
 
+func isSubscriptionForWrongXname(xname string, eventSub *hmcollector.EventSubscription) bool {
+	if !*pruneOldSubscriptions {
+		return false
+	}
+
+	if xnametypes.GetHMSType(xname) == xnametypes.HMSTypeInvalid {
+		logger.Debug("The endpoint ID is unexpectedly not an xname when checking for stale subscriptions.",
+			zap.Any("xname", xname))
+		// This function can only check for bad subscriptions when the xname passed to it is valid
+		return false
+	}
+
+	xnameOfSub := eventSub.Context
+	if xnametypes.GetHMSType(xnameOfSub) == xnametypes.HMSTypeInvalid {
+		destinationParts := strings.Split(eventSub.Destination, "/")
+		xnameOfSub = destinationParts[len(destinationParts)-1]
+		if xnametypes.GetHMSType(xnameOfSub) == xnametypes.HMSTypeInvalid {
+			// Neither the Destination nor the Context contain a valid xname
+			return false
+		}
+	}
+
+	xnameOfSubNormalized := xnametypes.NormalizeHMSCompID(xnameOfSub)
+	xnameOfEndpointNormalized := xnametypes.NormalizeHMSCompID(xname)
+	if xnameOfSubNormalized != xnameOfEndpointNormalized {
+		// The destination ends in a valid xname, or the context is a valid xname.
+		// The xname does not match the hostname/xname of the redfish endpoint.
+		// Conclusion:
+		//   The subscription was created by hms-hmcollector and not slingshot or something else.
+		//   The subscription is for the wrong endpoint
+		//   The hardware was likely physically moved and this old subscription should be deleted.
+		logger.Info("Found mismatched subscription",
+			zap.String("endpoint", xname),
+			zap.String("destination", eventSub.Destination),
+			zap.String("context", eventSub.Context),
+			zap.String("normalized endpoint xname", xnameOfEndpointNormalized),
+			zap.String("normalized subscription xname", xnameOfSubNormalized),
+		)
+		return true
+	}
+	return false
+}
+
+func deleteSubscriptionForWrongXname(endpoint *rf.RedfishEPDescription, subUri string, eventSub *hmcollector.EventSubscription) {
+	// This function should only be used to delete subscriptions where isSubscriptionForWrongXname returns true.
+	baseEndpointURL := "https://" + endpoint.FQDN
+	fullURL := baseEndpointURL + subUri
+
+	endpointLogger := logger.With(
+		zap.Any("xname", endpoint.ID),
+		zap.Any("destination", eventSub.Destination),
+		zap.Any("context", eventSub.Context),
+	)
+
+	endpointLogger.Warn("Subscription does not match endpoint. Deleting the subscription.")
+
+	deleteRetBytes, _, deleteErr := doHTTPAction(endpoint, http.MethodDelete, fullURL, nil)
+	if deleteErr != nil {
+		endpointLogger.Error("Failed to delete subscription!", zap.Error(deleteErr))
+	} else {
+		endpointLogger.Info("Deleted subscription.",
+			zap.String("string(deleteRetBytes)", string(deleteRetBytes)))
+	}
+}
+
+func getSubscriptions(endpoint *rf.RedfishEPDescription) (*hmcollector.EventSubscriptionCollection, error) {
+	baseEndpointURL := "https://" + endpoint.FQDN
+	fullURL := fmt.Sprintf("%s/redfish/v1/EventService/Subscriptions", baseEndpointURL)
+	payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var subList hmcollector.EventSubscriptionCollection
+	err = json.Unmarshal(payloadBytes, &subList)
+	if err != nil {
+		return nil, err
+	}
+	return &subList, nil
+}
+
+func getSubscription(endpoint *rf.RedfishEPDescription, subUri string) (*hmcollector.EventSubscription, error) {
+	baseEndpointURL := "https://" + endpoint.FQDN
+	fullURL := baseEndpointURL + subUri
+
+	payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var eventSub hmcollector.EventSubscription
+	err = json.Unmarshal(payloadBytes, &eventSub)
+	if err != nil {
+		return nil, err
+	}
+	return &eventSub, nil
+}
+
 func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []string) (bool, error) {
 	baseEndpointURL := "https://" + endpoint.FQDN
 
@@ -190,6 +289,11 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 				// successfully updated return as a valid match.  If the update was unsuccessful
 				// it attempted to delete the subscription, so return no match.
 				return match, nil
+			}
+		} else {
+			if *pruneOldSubscriptions &&
+				isSubscriptionForWrongXname(endpoint.ID, &eventSub) {
+				deleteSubscriptionForWrongXname(endpoint, sub.OId, &eventSub)
 			}
 		}
 	}
@@ -345,6 +449,27 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 			if *rfStreamingEnabled {
 				// Only create the streaming subscription if enabled.
 				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
+			}
+
+			if *pruneOldSubscriptions {
+				subscriptions, err := getSubscriptions(sub.Endpoint)
+				if err != nil {
+					logger.Error("Unable to get subscriptions!", zap.String("xname", sub.Endpoint.ID), zap.Error(err))
+				} else {
+					for _, member := range subscriptions.Members {
+						eventSub, err := getSubscription(sub.Endpoint, member.OId)
+						if err != nil {
+							logger.Error("Unable to get subscription!",
+								zap.String("xname", sub.Endpoint.ID),
+								zap.String("id", member.OId),
+								zap.Error(err))
+							continue
+						}
+						if isSubscriptionForWrongXname(sub.Endpoint.ID, eventSub) {
+							deleteSubscriptionForWrongXname(sub.Endpoint, member.OId, eventSub)
+						}
+					}
+				}
 			}
 
 			// Set up a subscription for the required registry prefix groups.
