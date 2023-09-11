@@ -26,7 +26,7 @@ Security - in case of vulnerabilities
 ## [2.27.0] - 2023-09-11
 
 ### Added
-- CASMHMS-5831 - Handle new telemetry ID from Olympus nCs
+- CASMHMS-5831 - Handle new telemetry IDs from Olympus nCs and cCs
 
 ## [2.26.0] - 2023-04-19
 

@@ -196,6 +196,12 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 				writeToKafka("cray-telemetry-humidity", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Metric") {
 				writeToKafka("cray-telemetry-metric", eventsString, &kafkaMessageKey)
+			} else if strings.HasSuffix(event.MessageId, "PowerFactor") {
+				writeToKafka("cray-telemetry-powerfactor", eventsString, &kafkaMessageKey)
+			} else if strings.HasSuffix(event.MessageId, "Frequency") {
+				writeToKafka("cray-telemetry-frequency", eventsString, &kafkaMessageKey)
+			} else if strings.HasSuffix(event.MessageId, "Percent") {
+				writeToKafka("cray-telemetry-percent", eventsString, &kafkaMessageKey)
 			} else {
 				logger.Error("Event MessageId has registry prefix CrayTelemetry, but the SensorType is unknown!",
 					zap.Any("event", event))
