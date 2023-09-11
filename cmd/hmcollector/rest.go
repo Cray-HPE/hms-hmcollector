@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2022] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2023] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -194,6 +194,8 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 				writeToKafka("cray-telemetry-liquidflow", eventsString, &kafkaMessageKey)
 			} else if strings.HasSuffix(event.MessageId, "Humidity") {
 				writeToKafka("cray-telemetry-humidity", eventsString, &kafkaMessageKey)
+			} else if strings.HasSuffix(event.MessageId, "Metric") {
+				writeToKafka("cray-telemetry-metric", eventsString, &kafkaMessageKey)
 			} else {
 				logger.Error("Event MessageId has registry prefix CrayTelemetry, but the SensorType is unknown!",
 					zap.Any("event", event))
