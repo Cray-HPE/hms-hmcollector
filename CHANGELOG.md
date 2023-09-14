@@ -23,6 +23,11 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.25.1] - 2023-09-14
+
+### Added
+- CASMHMS-5831 - Handle new telemetry IDs from Olympus nCs and cCs
+
 ## [2.25.0] - 2023-01-19
 
 ### Changed
