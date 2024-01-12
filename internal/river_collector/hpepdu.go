@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -43,7 +43,7 @@ func (collector HPEPDURiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 	if decodeErr != nil {
 		return
 	}
-	
+
 	if name, ok := payload["Name"]; ok {
 		nameStr := name.(string)
 		if strings.Contains(nameStr, "Outlet") {
@@ -70,9 +70,9 @@ func (collector HPEPDURiverCollector) parseOutletPayload(payloadBytes []byte,
 
 	// Use Oid to get the outlet number because "Id" isn't always populated
 	f := strings.FieldsFunc(outlet.Links.Oid,
-		func(c rune) bool {return !unicode.IsNumber(c)})
-	indexU64, _ := strconv.ParseUint(f[len(f) - 1], 10, 8)
-	index := uint8(indexU64)
+		func(c rune) bool { return !unicode.IsNumber(c) })
+	indexU64, _ := strconv.ParseUint(f[len(f)-1], 10, 8)
+	index := int16(indexU64)
 
 	// Outlet Power
 	powerEvent := hmcollector.Event{
@@ -83,7 +83,7 @@ func (collector HPEPDURiverCollector) parseOutletPayload(payloadBytes []byte,
 	powerEvent.Oem.TelemetrySource = "River"
 
 	payloadP := hmcollector.CrayJSONPayload{
-		Index: new(uint8),
+		Index: new(int16),
 	}
 	payloadP.Timestamp = timestamp
 	payloadP.Location = location + "p0"
@@ -104,7 +104,7 @@ func (collector HPEPDURiverCollector) parseOutletPayload(payloadBytes []byte,
 	currentEvent.Oem.TelemetrySource = "River"
 
 	payloadC := hmcollector.CrayJSONPayload{
-		Index: new(uint8),
+		Index: new(int16),
 	}
 	payloadC.Timestamp = timestamp
 	payloadC.Location = location + "p0"
@@ -125,7 +125,7 @@ func (collector HPEPDURiverCollector) parseOutletPayload(payloadBytes []byte,
 	voltageEvent.Oem.TelemetrySource = "River"
 
 	payloadV := hmcollector.CrayJSONPayload{
-		Index: new(uint8),
+		Index: new(int16),
 	}
 	payloadV.Timestamp = timestamp
 	payloadV.Location = location + "p0"
@@ -146,7 +146,7 @@ func (collector HPEPDURiverCollector) parseOutletPayload(payloadBytes []byte,
 	energyEvent.Oem.TelemetrySource = "River"
 
 	payloadE := hmcollector.CrayJSONPayload{
-		Index: new(uint8),
+		Index: new(int16),
 	}
 	payloadE.Timestamp = timestamp
 	payloadE.Location = location + "p0"
@@ -203,8 +203,8 @@ func (collector HPEPDURiverCollector) parseBranchPayload(payloadBytes []byte,
 	// However, the Id field isn't always populated so just convert the branch
 	// letter into an index.
 	f := strings.Fields(branch.Name)
-	branchChar := f[len(f) - 1]
-	index := uint8(branchChar[0]) - 64
+	branchChar := f[len(f)-1]
+	index := int16(branchChar[0]) - 64
 	deviceSpecificContext := ""
 
 	// Get the Line#ToLine# string for this branch for context.
@@ -223,7 +223,7 @@ func (collector HPEPDURiverCollector) parseBranchPayload(payloadBytes []byte,
 	currentEvent.Oem.TelemetrySource = "River"
 
 	payloadC := hmcollector.CrayJSONPayload{
-		Index: new(uint8),
+		Index: new(int16),
 	}
 	payloadC.Timestamp = timestamp
 	payloadC.Location = location + "p0"
@@ -245,7 +245,7 @@ func (collector HPEPDURiverCollector) parseBranchPayload(payloadBytes []byte,
 	energyEvent.Oem.TelemetrySource = "River"
 
 	payloadE := hmcollector.CrayJSONPayload{
-		Index: new(uint8),
+		Index: new(int16),
 	}
 	payloadE.Timestamp = timestamp
 	payloadE.Location = location + "p0"
@@ -291,7 +291,7 @@ func (collector HPEPDURiverCollector) parseMainPayload(payloadBytes []byte,
 	for index, name := range sensorListP {
 		sensor := pduMain.PolyPhasePowerWatts[name]
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 		payload.Timestamp = timestamp
 		payload.Location = location + "p0"
@@ -299,7 +299,7 @@ func (collector HPEPDURiverCollector) parseMainPayload(payloadBytes []byte,
 		payload.PhysicalContext = "Phase"
 		payload.PhysicalSubContext = "Input"
 		payload.DeviceSpecificContext = name
-		*payload.Index = uint8(index)
+		*payload.Index = int16(index)
 		payload.Value = strconv.FormatFloat(sensor.Reading, 'f', -1, 64)
 
 		powerEvent.Oem.Sensors = append(powerEvent.Oem.Sensors, payload)
@@ -323,7 +323,7 @@ func (collector HPEPDURiverCollector) parseMainPayload(payloadBytes []byte,
 	for index, name := range sensorListV {
 		sensor := pduMain.PolyPhaseVoltage[name]
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 		payload.Timestamp = timestamp
 		payload.Location = location + "p0"
@@ -331,7 +331,7 @@ func (collector HPEPDURiverCollector) parseMainPayload(payloadBytes []byte,
 		payload.PhysicalContext = "Phase"
 		payload.PhysicalSubContext = "Input"
 		payload.DeviceSpecificContext = name
-		*payload.Index = uint8(index)
+		*payload.Index = int16(index)
 		payload.Value = strconv.FormatFloat(sensor.Reading, 'f', -1, 64)
 
 		voltageEvent.Oem.Sensors = append(voltageEvent.Oem.Sensors, payload)
@@ -355,7 +355,7 @@ func (collector HPEPDURiverCollector) parseMainPayload(payloadBytes []byte,
 	for index, name := range sensorListC {
 		sensor := pduMain.PolyPhaseCurrentAmps[name]
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 		payload.Timestamp = timestamp
 		payload.Location = location + "p0"
@@ -363,7 +363,7 @@ func (collector HPEPDURiverCollector) parseMainPayload(payloadBytes []byte,
 		payload.PhysicalContext = "Line"
 		payload.PhysicalSubContext = "Input"
 		payload.DeviceSpecificContext = name
-		*payload.Index = uint8(index)
+		*payload.Index = int16(index)
 		payload.Value = strconv.FormatFloat(sensor.Reading, 'f', -1, 64)
 
 		currentEvent.Oem.Sensors = append(currentEvent.Oem.Sensors, payload)
