@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -32,12 +32,12 @@ type CrayJSONPayload struct {
 	Timestamp             string
 	Location              string
 	ParentalContext       string `json:",omitempty"`
-	ParentalIndex         *uint8 `json:",omitempty"`
+	ParentalIndex         *int16 `json:",omitempty"`
 	PhysicalContext       string
-	Index                 *uint8 `json:",omitempty"`
+	Index                 *int16 `json:",omitempty"`
 	PhysicalSubContext    string `json:",omitempty"`
 	DeviceSpecificContext string `json:",omitempty"`
-	SubIndex              *uint8 `json:",omitempty"`
+	SubIndex              *int16 `json:",omitempty"`
 	Value                 string
 }
 
@@ -239,5 +239,3 @@ type HPEPDUSensor struct {
 	DataSourceUri string  `json:"DataSourceUri"`
 	Reading       float64 `json:"Reading"`
 }
-
-
