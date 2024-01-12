@@ -23,6 +23,11 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.28.0] - 2024-01-12
+
+### Changed
+- CASMHMS-6123 - In messages handle -1 for the fields: Index, ParentalIndex, and SubIndex.
+
 ## [2.27.0] - 2023-09-11
 
 ### Added
