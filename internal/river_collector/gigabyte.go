@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,11 @@ package river_collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 	"strconv"
 	"time"
+
+	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 func (collector GigabyteRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
@@ -53,7 +54,7 @@ func (collector GigabyteRiverCollector) ParseJSONPowerEvents(payloadBytes []byte
 		switch PowerControl.Name {
 		case "Chassis Power Control", "Server Power Control":
 			payload := hmcollector.CrayJSONPayload{
-				Index: new(uint8),
+				Index: new(int16),
 			}
 
 			payload.Timestamp = timestamp
@@ -61,7 +62,7 @@ func (collector GigabyteRiverCollector) ParseJSONPowerEvents(payloadBytes []byte
 			payload.PhysicalContext = PowerControl.PhysicalContext
 			payload.DeviceSpecificContext = PowerControl.PhysicalContext + "_PowerControl"
 			indexU64, _ := strconv.ParseUint(PowerControl.MemberId, 10, 8)
-			*payload.Index = uint8(indexU64)
+			*payload.Index = int16(indexU64)
 			payload.Value = strconv.FormatFloat(PowerControl.PowerMetrics.AverageConsumedWatts, 'f', -1,
 				64)
 
@@ -123,7 +124,7 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 	// Fans
 	for _, Fan := range thermal.Fans {
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 
 		payload.Timestamp = timestamp
@@ -132,13 +133,13 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 		payload.DeviceSpecificContext = Fan.Name
 		payload.PhysicalContext = Fan.PhysicalContext
 		indexU64, _ := strconv.ParseUint(Fan.MemberId, 10, 8)
-		*payload.Index = uint8(indexU64)
+		*payload.Index = int16(indexU64)
 		payload.Value = strconv.FormatFloat(Fan.Reading, 'f', -1, 64)
 
 		fanEvent.Oem.Sensors = append(fanEvent.Oem.Sensors, payload)
 	}
 
-	if (len(thermal.Fans) > 0) {
+	if len(thermal.Fans) > 0 {
 		events = append(events, fanEvent)
 	}
 
@@ -153,7 +154,7 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 
 	for _, Temperature := range thermal.Temperatures {
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 
 		payload.Timestamp = timestamp
@@ -162,13 +163,13 @@ func (collector GigabyteRiverCollector) ParseJSONThermalEvents(payloadBytes []by
 		payload.DeviceSpecificContext = Temperature.Name
 		payload.PhysicalContext = Temperature.PhysicalContext
 		indexU64, _ := strconv.ParseUint(Temperature.MemberId, 10, 8)
-		*payload.Index = uint8(indexU64)
+		*payload.Index = int16(indexU64)
 		payload.Value = strconv.FormatFloat(Temperature.ReadingCelsius, 'f', -1, 64)
 
 		temperatureEvent.Oem.Sensors = append(temperatureEvent.Oem.Sensors, payload)
 	}
 
-	if (len(thermal.Temperatures) > 0) {
+	if len(thermal.Temperatures) > 0 {
 		events = append(events, temperatureEvent)
 	}
 

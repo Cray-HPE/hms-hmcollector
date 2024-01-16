@@ -23,6 +23,12 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+
+## [2.25.2] - 2024-01-12
+
+### Changed
+- CASMHMS-6123 - Changed to support the value -1 in the fields: Index, ParentalIndex, and SubIndex.
+
 ## [2.25.1] - 2023-09-14
 
 ### Added

@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,11 @@ package river_collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 	"strconv"
 	"time"
+
+	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
@@ -52,7 +53,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 	for _, PowerControl := range power.PowerControl {
 		if PowerControl.Name == "Server Power Control" {
 			payload := hmcollector.CrayJSONPayload{
-				Index: new(uint8),
+				Index: new(int16),
 			}
 
 			payload.Timestamp = timestamp
@@ -60,7 +61,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 			payload.PhysicalContext = "Chassis"
 			payload.DeviceSpecificContext = "Chassis_PowerControl"
 			indexU64, _ := strconv.ParseUint(PowerControl.MemberId, 10, 8)
-			*payload.Index = uint8(indexU64)
+			*payload.Index = int16(indexU64)
 			payload.Value = strconv.FormatFloat(PowerControl.PowerConsumedWatts, 'f', -1, 64)
 
 			powerEvent.Oem.Sensors = append(powerEvent.Oem.Sensors, payload)
@@ -79,7 +80,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 	// PowerSupplies
 	for _, PowerSupply := range power.PowerSupplies {
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 
 		payload.Timestamp = timestamp
@@ -87,7 +88,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 		payload.PhysicalContext = "PowerSupplyBay"
 		payload.DeviceSpecificContext = "PowerSupplyBay_" + PowerSupply.MemberId
 		indexU64, _ := strconv.ParseUint(PowerSupply.MemberId, 10, 8)
-		*payload.Index = uint8(indexU64)
+		*payload.Index = int16(indexU64)
 		payload.Value = strconv.FormatFloat(PowerSupply.LineInputVoltage, 'f', -1, 64)
 
 		voltageEvent.Oem.Sensors = append(voltageEvent.Oem.Sensors, payload)
@@ -96,7 +97,7 @@ func (collector IntelRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 	// Voltages
 	for _, Voltage := range power.Voltages {
 		payload := hmcollector.CrayJSONPayload{
-			Index: new(uint8),
+			Index: new(int16),
 		}
 
 		payload.Timestamp = timestamp
@@ -132,8 +133,8 @@ func (collector IntelRiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 
 	for _, Temperature := range thermal.Temperatures {
 		payload := hmcollector.CrayJSONPayload{
-			Index:         new(uint8),
-			ParentalIndex: new(uint8),
+			Index:         new(int16),
+			ParentalIndex: new(int16),
 		}
 
 		payload.Timestamp = timestamp
