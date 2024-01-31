@@ -23,6 +23,11 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.29.0] - 2024-01-24
+
+### Changed
+- CASMHMS-6127 - Added support for creating subscriptions on OpenBMC Nodes
+
 ## [2.28.0] - 2024-01-12
 
 ### Changed
