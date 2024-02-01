@@ -24,6 +24,8 @@ package main
 
 import (
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 type EndpointsCache struct {
@@ -65,6 +67,10 @@ func (c *EndpointsCache) ReadRfType(endpointId string, lastDiscoveryAttempt stri
 		}
 		// cache has a value, however, hsm has since rediscovered the redfish endpoint,
 		// and so return UnsetRfType as though there is no cached value.
+		logger.Info("Ignoring cached value because timestamp for last discovery attempt is new.",
+			zap.String("endpoint", endpointId),
+			zap.String("CachedTimestamp", v.LastDiscoveryAttempt),
+			zap.String("NewTimestamp", lastDiscoveryAttempt))
 	}
 	return UnsetRfType
 }
@@ -73,6 +79,11 @@ func (c *EndpointsCache) WriteRfType(endpointId string, lastDiscoveryAttempt str
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
+	logger.Info("Write endpoint type to the cache",
+		zap.String("endpoint", endpointId),
+		zap.String("type", rfTypeToString(rfType)),
+		zap.String("timestamp", lastDiscoveryAttempt))
+
 	if _, found := c.cache[endpointId]; !found {
 		c.cache[endpointId] = &EndpointCache{}
 	}
@@ -80,4 +91,25 @@ func (c *EndpointsCache) WriteRfType(endpointId string, lastDiscoveryAttempt str
 	endpointCache := c.cache[endpointId]
 	endpointCache.Type = rfType
 	endpointCache.LastDiscoveryAttempt = lastDiscoveryAttempt
+}
+
+func rfTypeToString(rfType RfType) string {
+	switch rfType {
+	case CrayRfType:
+		return "Cray"
+	case GigabyteRfType:
+		return "Gigabyte"
+	case HpeRfType:
+		return "HPE"
+	case IntelRfType:
+		return "Intel"
+	case OpenBmcRfType:
+		return "OpenBMC"
+	case UnknownRfType:
+		return "Unknown"
+	case UnsetRfType:
+		return "Unset"
+	default:
+		return "UnknownCase"
+	}
 }

@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 )
 
@@ -48,6 +49,12 @@ type rfChassisMembers struct {
 }
 
 func httpGetRedfishType(endpoint *rf.RedfishEPDescription) RfType {
+	if xnametypes.GetHMSType(endpoint.ID) != xnametypes.NodeBMC {
+		// Skip anything that is not a NodeBMC
+		// GET /redfish/v1/Chassis will fail for other types of endpoints
+		return UnknownRfType
+	}
+
 	URL := "https://" + endpoint.FQDN + "/redfish/v1/Chassis"
 	payloadBytes, statusCode, err := doHTTPAction(endpoint, http.MethodGet, URL, nil)
 	if err != nil {

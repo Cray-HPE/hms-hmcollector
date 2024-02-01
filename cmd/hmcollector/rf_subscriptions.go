@@ -581,6 +581,9 @@ func doRFSubscribe() {
 				}
 				pendingRFSubscriptions <- endpoints[newEndpoint.ID]
 			} else if subCheckCnt%subCheckFreq == 0 {
+				currentEndpoint := endpoints[newEndpoint.ID]
+				currentEndpoint.Endpoint = newEndpoint
+				endpoints[newEndpoint.ID] = currentEndpoint
 				// Endpoint has a subscription, check that sub is still there and correct.
 				// NOTE: Don't need to do this at the same frequency as picking up new additions so as to not
 				// hammer the endpoint.

@@ -133,7 +133,14 @@ func doUpdateHSMEndpoints() {
 
 				// Make sure this is a new endpoint.
 				HSMEndpointsLock.Lock()
-				_, endpointIsKnown := HSMEndpoints[newEndpoint.ID]
+				e, endpointIsKnown := HSMEndpoints[newEndpoint.ID]
+				if endpointIsKnown {
+					// The credentials are in the endpoint object, therefore,
+					// only update the fields that need to stay up to date
+					e.DiscInfo.LastAttempt = newEndpoint.DiscInfo.LastAttempt
+					e.DiscInfo.LastStatus = newEndpoint.DiscInfo.LastStatus
+					e.DiscInfo.RedfishVersion = newEndpoint.DiscInfo.RedfishVersion
+				}
 				HSMEndpointsLock.Unlock()
 
 				if endpointIsKnown {
