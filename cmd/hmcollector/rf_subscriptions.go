@@ -67,7 +67,6 @@ func getDestination(endpoint *rf.RedfishEPDescription) string {
 	} else if destination.Scheme == "http" && checkOpenBmc(endpoint) {
 		// Open BMC requires https
 		destination.Scheme = "https"
-
 	}
 	if destination.Port() == "" && *restPort != 80 && *restPort != 443 {
 		destination.Host += ":" + strconv.Itoa(*restPort)

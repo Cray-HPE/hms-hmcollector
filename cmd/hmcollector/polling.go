@@ -351,7 +351,7 @@ func monitorPollingEndpoints() {
 					}
 
 					// OpenBMC NVIDIA
-					// OpenBMC needs to be checked after HPE, because, there some implementations
+					// OpenBMC needs to be checked after HPE, because, some implementations
 					// of OpenBMC mistakenly return success for /redfish/v1/Chassis/1
 					fullURL = "https://" + endpoint.FQDN + "/redfish/v1/Chassis/BMC_0"
 					payloadBytes, statusCode, err = doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
