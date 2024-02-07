@@ -50,8 +50,9 @@ type MockRiverCollector struct{}
 // Vendor specific
 type IntelRiverCollector struct{}
 type GigabyteRiverCollector struct{}
+type OpenBMCRiverCollector struct{}
 type HPERiverCollector struct{}
-type HPEPDURiverCollector struct{
+type HPEPDURiverCollector struct {
 	Sensors map[string]HPEPDUSensor
 }
 type HPEPDUSensor struct {
