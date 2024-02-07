@@ -350,6 +350,25 @@ func monitorPollingEndpoints() {
 						model = chassis.Model
 					}
 
+					// OpenBMC NVIDIA
+					// OpenBMC needs to be checked after HPE, because, some implementations
+					// of OpenBMC mistakenly return success for /redfish/v1/Chassis/1
+					fullURL = "https://" + endpoint.FQDN + "/redfish/v1/Chassis/BMC_0"
+					payloadBytes, statusCode, err = doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+					if err == nil && statusCode == http.StatusOK {
+						var chassis hmcollector.Chassis
+						decodeErr := json.Unmarshal(payloadBytes, &chassis)
+						if decodeErr != nil {
+							logger.Error("Failed to decode model information, will not poll endpoint.",
+								zap.Any("endpoint", endpoint),
+								zap.Error(err))
+
+							return
+						}
+
+						model = chassis.Model
+					}
+
 					// At this point we have what we need, use process of elimination.
 					if strings.HasPrefix(model, "R272") ||
 						strings.HasPrefix(model, "R282") ||
@@ -368,6 +387,13 @@ func monitorPollingEndpoints() {
 						}
 					} else if strings.HasPrefix(model, "ProLiant") {
 						logger.Info("Found HPE endpoint eligible for polling.",
+							zap.Any("endpoint", endpoint))
+						newEndpoint = &EndpointWithCollector{
+							Endpoint:       endpoint,
+							RiverCollector: hpeCollector,
+						}
+					} else if isOpenBmcModel(model) {
+						logger.Info("Found OpenBMC endpoint eligible for polling.",
 							zap.Any("endpoint", endpoint))
 						newEndpoint = &EndpointWithCollector{
 							Endpoint:       endpoint,

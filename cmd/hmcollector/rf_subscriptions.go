@@ -49,6 +49,11 @@ func checkILO(endpoint *rf.RedfishEPDescription) bool {
 	return err == nil && statusCode < 300
 }
 
+func checkOpenBmc(endpoint *rf.RedfishEPDescription) bool {
+	rfType := GetRedfishType(endpoint)
+	return rfType == OpenBmcRfType
+}
+
 func getDestination(endpoint *rf.RedfishEPDescription) string {
 	destination, err := url.Parse(*restURL)
 	if err != nil {
@@ -58,6 +63,9 @@ func getDestination(endpoint *rf.RedfishEPDescription) string {
 	}
 	if destination.Scheme == "http" && checkILO(endpoint) {
 		// iLO requires https
+		destination.Scheme = "https"
+	} else if destination.Scheme == "http" && checkOpenBmc(endpoint) {
+		// Open BMC requires https
 		destination.Scheme = "https"
 	}
 	if destination.Port() == "" && *restPort != 80 && *restPort != 443 {
@@ -246,7 +254,8 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 		if eventSub.Destination == getDestination(endpoint) {
 			// Matches this destination, make sure the registry prefix is one we created.
 			match := false
-			if registryPrefixes == nil && eventSub.RegistryPrefixes == nil {
+			if (registryPrefixes == nil || len(registryPrefixes) == 0) &&
+				(eventSub.RegistryPrefixes == nil || len(eventSub.RegistryPrefixes) == 0) {
 				match = true
 			} else if registryPrefixes != nil {
 				hasAllRegistryPrefixes := true
@@ -448,7 +457,10 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 			registryPrefixGroups := [][]string{nil}
 			if *rfStreamingEnabled {
 				// Only create the streaming subscription if enabled.
-				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
+				rfType := GetRedfishType(sub.Endpoint)
+				if rfType != OpenBmcRfType {
+					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
+				}
 			}
 
 			if *pruneOldSubscriptions {
@@ -568,6 +580,9 @@ func doRFSubscribe() {
 				}
 				pendingRFSubscriptions <- endpoints[newEndpoint.ID]
 			} else if subCheckCnt%subCheckFreq == 0 {
+				currentEndpoint := endpoints[newEndpoint.ID]
+				currentEndpoint.Endpoint = newEndpoint
+				endpoints[newEndpoint.ID] = currentEndpoint
 				// Endpoint has a subscription, check that sub is still there and correct.
 				// NOTE: Don't need to do this at the same frequency as picking up new additions so as to not
 				// hammer the endpoint.
