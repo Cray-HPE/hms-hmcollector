@@ -45,7 +45,7 @@ func (collector OpenBMCRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 	// PowerControl
 	powerControlEvent := hmcollector.Event{
 		MessageId:      PowerMessageID,
-		EventTimestamp: time.Now().Format(time.RFC3339),
+		EventTimestamp: timestamp,
 		Oem:            &hmcollector.Sensors{},
 	}
 	powerControlEvent.Oem.TelemetrySource = "River"
