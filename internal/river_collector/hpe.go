@@ -112,6 +112,8 @@ func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 		return
 	}
 
+	// Fans
+
 	fanEvent := hmcollector.Event{
 		MessageId:      FanMessageID,
 		EventTimestamp: timestamp,
@@ -119,7 +121,6 @@ func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 	}
 	fanEvent.Oem.TelemetrySource = "River"
 
-	// Fans
 	for _, Fan := range thermal.Fans {
 		payload := hmcollector.CrayJSONPayload{
 			Index: new(int16),
@@ -135,6 +136,10 @@ func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 		payload.Value = strconv.FormatFloat(Fan.Reading, 'f', -1, 64)
 
 		fanEvent.Oem.Sensors = append(fanEvent.Oem.Sensors, payload)
+	}
+
+	if len(thermal.Fans) > 0 {
+		events = append(events, fanEvent)
 	}
 
 	// Temperatures

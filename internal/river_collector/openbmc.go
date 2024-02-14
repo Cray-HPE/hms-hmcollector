@@ -49,6 +49,7 @@ func (collector OpenBMCRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 		Oem:            &hmcollector.Sensors{},
 	}
 	powerControlEvent.Oem.TelemetrySource = "River"
+	hasPowerControlData := false
 
 	for _, PowerControl := range power.PowerControl {
 		if PowerControl.Name == "Chassis Power Control" {
@@ -65,10 +66,12 @@ func (collector OpenBMCRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 			payload.Value = strconv.FormatFloat(PowerControl.PowerConsumedWatts, 'f', -1, 64)
 
 			powerControlEvent.Oem.Sensors = append(powerControlEvent.Oem.Sensors, payload)
+
+			hasPowerControlData = true
 		}
 	}
 
-	if len(power.PowerControl) > 0 {
+	if hasPowerControlData {
 		events = append(events, powerControlEvent)
 	}
 
@@ -139,6 +142,7 @@ func (collector OpenBMCRiverCollector) ParseJSONThermalEvents(payloadBytes []byt
 		return
 	}
 
+	// Fans
 	fanEvent := hmcollector.Event{
 		MessageId:      FanMessageID,
 		EventTimestamp: timestamp,
@@ -146,7 +150,6 @@ func (collector OpenBMCRiverCollector) ParseJSONThermalEvents(payloadBytes []byt
 	}
 	fanEvent.Oem.TelemetrySource = "River"
 
-	// Fans
 	for _, Fan := range thermal.Fans {
 		payload := hmcollector.CrayJSONPayload{
 			Index: new(int16),
@@ -162,6 +165,10 @@ func (collector OpenBMCRiverCollector) ParseJSONThermalEvents(payloadBytes []byt
 		payload.Value = strconv.FormatFloat(Fan.Reading, 'f', -1, 64)
 
 		fanEvent.Oem.Sensors = append(fanEvent.Oem.Sensors, payload)
+	}
+
+	if len(thermal.Fans) > 0 {
+		events = append(events, fanEvent)
 	}
 
 	// Temperatures
