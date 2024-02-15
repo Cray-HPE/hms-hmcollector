@@ -23,39 +23,52 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.30.0] - 2024-02-12
+
+### Changed
+
+- CASMHMS-6133 - Added support for polling telemetry data from OpenBMC Nodes
+
 ## [2.29.0] - 2024-01-24
 
 ### Changed
+
 - CASMHMS-6127 - Added support for creating subscriptions on OpenBMC Nodes
 
 ## [2.28.0] - 2024-01-12
 
 ### Changed
+
 - CASMHMS-6123 - In messages handle -1 for the fields: Index, ParentalIndex, and SubIndex.
 
 ## [2.27.0] - 2023-09-11
 
 ### Added
+
 - CASMHMS-5831 - Handle new telemetry IDs from Olympus nCs and cCs
 
 ## [2.26.0] - 2023-04-19
 
 ### Changed
+
 - CASMHMS-5685 - Changed to prune event subscriptions with stale destinations. Stale subscriptions happen when hardware is physically moved.
 
 ## [2.25.0] - 2023-01-19
 
 ### Changed
+
 - CASMSMF-7120: Update for Cray Fabric Health Telemetry and Events to be sent to a common kafka topic cray-fabric-health instead of cray-fabric-health-events and cray-fabric-health-telemetry.
 
 ## [2.24.0] - 2023-01-10
 
 ### Added
+
 - CASMSMF-7120: Added support for Cray Fabric Health Telemetry collection.
 
 ## [2.23.0] - 2022-11-07
 
 ### Changed
+
 - CASMHMS-5824: Add a message key to kafka messages to ensure events are sent to the same Kafka partition. The message key is the BMC Xname concatenated with the Redfish Event Message ID. For example `x3000c0s11b4.EventLog.1.0.PowerStatusChange`. 
 
 ## [2.22.0] - 2022-10-05

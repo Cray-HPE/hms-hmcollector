@@ -425,6 +425,7 @@ func main() {
 		gigabyteCollector = river_collector.GigabyteRiverCollector{}
 		intelCollector = river_collector.IntelRiverCollector{}
 		hpeCollector = river_collector.HPERiverCollector{}
+		openBmcCollector = river_collector.OpenBMCRiverCollector{}
 
 		go doPolling()
 	}

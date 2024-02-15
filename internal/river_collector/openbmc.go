@@ -32,7 +32,7 @@ import (
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
-func (collector HPERiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
+func (collector OpenBMCRiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 	location string) (events []hmcollector.Event) {
 	timestamp := time.Now().Format(time.RFC3339)
 
@@ -42,43 +42,47 @@ func (collector HPERiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 		return
 	}
 
-	powerEvent := hmcollector.Event{
-		MessageId:      PowerMessageID,
-		EventTimestamp: time.Now().Format(time.RFC3339),
-		Oem:            &hmcollector.Sensors{},
-	}
-	powerEvent.Oem.TelemetrySource = "River"
-
 	// PowerControl
-	for _, PowerControl := range power.PowerControl {
-		payload := hmcollector.CrayJSONPayload{
-			Index: new(int16),
-		}
-
-		payload.Timestamp = timestamp
-		payload.Location = location
-		payload.PhysicalContext = "PowerControlIntake"
-		payload.DeviceSpecificContext = "PowerIntake"
-		indexU64, _ := strconv.ParseUint(PowerControl.MemberId, 10, 8)
-		*payload.Index = int16(indexU64)
-		payload.Value = strconv.FormatFloat(PowerControl.PowerMetrics.AverageConsumedWatts, 'f', -1,
-			64)
-
-		powerEvent.Oem.Sensors = append(powerEvent.Oem.Sensors, payload)
-	}
-
-	if len(power.PowerControl) > 0 {
-		events = append(events, powerEvent)
-	}
-
-	voltageEvent := hmcollector.Event{
-		MessageId:      VoltageMessageID,
+	powerControlEvent := hmcollector.Event{
+		MessageId:      PowerMessageID,
 		EventTimestamp: timestamp,
 		Oem:            &hmcollector.Sensors{},
 	}
-	voltageEvent.Oem.TelemetrySource = "River"
+	powerControlEvent.Oem.TelemetrySource = "River"
+	hasPowerControlData := false
+
+	for _, PowerControl := range power.PowerControl {
+		if PowerControl.Name == "Chassis Power Control" {
+			payload := hmcollector.CrayJSONPayload{
+				Index: new(int16),
+			}
+
+			payload.Timestamp = timestamp
+			payload.Location = location
+			payload.PhysicalContext = "Chassis"
+			payload.DeviceSpecificContext = PowerControl.Name
+			indexU64, _ := strconv.ParseUint(PowerControl.MemberId, 10, 8)
+			*payload.Index = int16(indexU64)
+			payload.Value = strconv.FormatFloat(PowerControl.PowerConsumedWatts, 'f', -1, 64)
+
+			powerControlEvent.Oem.Sensors = append(powerControlEvent.Oem.Sensors, payload)
+
+			hasPowerControlData = true
+		}
+	}
+
+	if hasPowerControlData {
+		events = append(events, powerControlEvent)
+	}
 
 	// PowerSupplies
+	powerSupplyEvent := hmcollector.Event{
+		MessageId:      PowerMessageID,
+		EventTimestamp: timestamp,
+		Oem:            &hmcollector.Sensors{},
+	}
+	powerSupplyEvent.Oem.TelemetrySource = "River"
+
 	for _, PowerSupply := range power.PowerSupplies {
 		payload := hmcollector.CrayJSONPayload{
 			Index: new(int16),
@@ -87,22 +91,48 @@ func (collector HPERiverCollector) ParseJSONPowerEvents(payloadBytes []byte,
 		payload.Timestamp = timestamp
 		payload.Location = location
 		payload.PhysicalContext = "PowerSupplyBay"
-		payload.DeviceSpecificContext = "PowerSupplyBay_" + PowerSupply.MemberId
+		payload.DeviceSpecificContext = PowerSupply.Name
 		indexU64, _ := strconv.ParseUint(PowerSupply.MemberId, 10, 8)
 		*payload.Index = int16(indexU64)
-		payload.Value = strconv.FormatFloat(PowerSupply.LineInputVoltage, 'f', -1, 64)
+		payload.Value = strconv.FormatFloat(PowerSupply.PowerOutputWatts, 'f', -1, 64)
+
+		powerSupplyEvent.Oem.Sensors = append(powerSupplyEvent.Oem.Sensors, payload)
+	}
+
+	if len(power.PowerSupplies) > 0 {
+		events = append(events, powerSupplyEvent)
+	}
+
+	// Voltages
+	voltageEvent := hmcollector.Event{
+		MessageId:      VoltageMessageID,
+		EventTimestamp: timestamp,
+		Oem:            &hmcollector.Sensors{},
+	}
+	voltageEvent.Oem.TelemetrySource = "River"
+
+	for _, Voltage := range power.Voltages {
+		payload := hmcollector.CrayJSONPayload{
+			Index: new(int16),
+		}
+
+		payload.Timestamp = timestamp
+		payload.Location = location
+		payload.PhysicalContext = "SystemBoard"
+		payload.DeviceSpecificContext = Voltage.Name
+		payload.Value = strconv.FormatFloat(Voltage.ReadingVolts, 'f', -1, 64)
 
 		voltageEvent.Oem.Sensors = append(voltageEvent.Oem.Sensors, payload)
 	}
 
-	if len(power.PowerSupplies) > 0 {
+	if len(power.Voltages) > 0 {
 		events = append(events, voltageEvent)
 	}
 
 	return
 }
 
-func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
+func (collector OpenBMCRiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 	location string) (events []hmcollector.Event) {
 	timestamp := time.Now().Format(time.RFC3339)
 
@@ -113,7 +143,6 @@ func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 	}
 
 	// Fans
-
 	fanEvent := hmcollector.Event{
 		MessageId:      FanMessageID,
 		EventTimestamp: timestamp,
@@ -175,8 +204,8 @@ func (collector HPERiverCollector) ParseJSONThermalEvents(payloadBytes []byte,
 	return
 }
 
-func (collector HPERiverCollector) GetPayloadURLForTelemetryType(endpoint *rf.RedfishEPDescription,
+func (collector OpenBMCRiverCollector) GetPayloadURLForTelemetryType(endpoint *rf.RedfishEPDescription,
 	telemetryType TelemetryType) []string {
-	url := fmt.Sprintf("https://%s/redfish/v1/Chassis/1/%s", endpoint.FQDN, telemetryType)
+	url := fmt.Sprintf("https://%s/redfish/v1/Chassis/Baseboard_0/%s", endpoint.FQDN, telemetryType)
 	return []string{url}
 }

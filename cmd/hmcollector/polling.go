@@ -42,6 +42,7 @@ var (
 	intelCollector    river_collector.IntelRiverCollector
 	hpeCollector      river_collector.HPERiverCollector
 	hpePDUCollector   river_collector.HPEPDURiverCollector
+	openBmcCollector  river_collector.OpenBMCRiverCollector
 
 	endpointMutex      sync.Mutex
 	endpoints          []EndpointWithCollector
@@ -397,7 +398,7 @@ func monitorPollingEndpoints() {
 							zap.Any("endpoint", endpoint))
 						newEndpoint = &EndpointWithCollector{
 							Endpoint:       endpoint,
-							RiverCollector: hpeCollector,
+							RiverCollector: openBmcCollector,
 						}
 					} else {
 						// We have to ignore it if we can't determine what it is.
