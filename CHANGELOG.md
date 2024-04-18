@@ -23,6 +23,12 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.31.0] - 2024-04-19
+
+### Changed
+
+- CASMHMS-6127 - Fixed redfish subscription support by updating the Model for OpenBMC
+
 ## [2.30.0] - 2024-02-12
 
 ### Changed

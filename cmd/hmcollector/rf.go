@@ -97,9 +97,13 @@ func httpGetRedfishType(endpoint *rf.RedfishEPDescription) RfType {
 }
 
 func isOpenBmcModel(model string) bool {
-	// Paradise has the model P4352/P4353
-	return strings.Contains(model, "P4352") ||
-		strings.Contains(model, "P4353")
+	// Paradise has had these values for Model field in /redfish/v1/Chassis/BMC_0
+	//   P4352/P4353
+	//   Falcon BMC Board
+	m := strings.ToLower(model)
+	return strings.Contains(m, "p4352") ||
+		strings.Contains(m, "p4353") ||
+		strings.Contains(m, "falcon")
 }
 
 func GetRedfishType(endpoint *rf.RedfishEPDescription) RfType {
