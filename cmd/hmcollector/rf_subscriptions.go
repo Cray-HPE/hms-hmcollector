@@ -517,6 +517,7 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				}
 
 				if subscribed {
+					logger.Info("Redfish subscription created", zap.String("ID", sub.Endpoint.ID), zap.Any("registryPrefix", registryPrefixGroup))
 					// Make sure the list of all unique registry prefixes is kept up to date.
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
 				}
