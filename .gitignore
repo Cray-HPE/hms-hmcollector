@@ -6,6 +6,7 @@ venv
 cmd/test
 configs/kafka_brokers.json
 kubernetes/.packaged
+*.swp
 
 # Prevent certificates from getting checked in
 *.ca

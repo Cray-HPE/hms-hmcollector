@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -49,8 +49,10 @@ func writeToKafka(topic, payload string, messageID *string) {
 		Timestamp:      time.Now(),
 	}
 
+	mId := ""
 	if messageID != nil {
 		msg.Key = []byte(*messageID)
+		mId = *messageID
 	}
 
 	// Loop on array index to avoid copy overhead of range
@@ -60,6 +62,7 @@ func writeToKafka(topic, payload string, messageID *string) {
 		brokerLogger := logger.With(
 			zap.String("broker", thisBroker.BrokerAddress),
 			zap.String("topic", topic),
+			zap.String("id", mId),
 		)
 		if atomicLevel.Level() == zap.DebugLevel {
 			// If we're at debug level, then also include the message.
@@ -69,15 +72,32 @@ func writeToKafka(topic, payload string, messageID *string) {
 		if _, hasTopic := thisBroker.TopicsToPublish[topic]; hasTopic {
 			brokerLogger.Debug("Sent message.", zap.String("msg.Value", string(msg.Value)))
 
+			if shouldLogMessage(mId) {
+				brokerLogger.Info("message", zap.String("msg.Value", string(msg.Value)))
+			}
 			produceErr := thisBroker.KafkaProducer.Produce(&msg, nil)
 			if produceErr != nil {
-				brokerLogger.Error("Failed to produce message!")
+				if shouldLogErrors {
+					brokerLogger.Error("Failed to produce message!", zap.Error(produceErr))
+				} else {
+					brokerLogger.Error("Failed to produce message!")
+				}
 			}
 		} else {
 			brokerLogger.Debug("Not sending message to broker because topic not in list")
 		}
 	}
 
+}
+
+func shouldLogMessage(id string) bool {
+	if shouldLogForXnames {
+		ids := strings.Split(id, ".")
+		xname := ids[0]
+		_, matches := logXnames[xname]
+		return matches
+	}
+	return false
 }
 
 func handleKafkaEvents(broker *hmcollector.KafkaBroker) {
@@ -90,7 +110,11 @@ func handleKafkaEvents(broker *hmcollector.KafkaBroker) {
 			)
 
 			if ev.TopicPartition.Error != nil {
-				eventLogger.Error("Failed to produce message!")
+				if shouldLogErrors {
+					eventLogger.Error("Failed to produce message!", zap.Error(ev.TopicPartition.Error))
+				} else {
+					eventLogger.Error("Failed to produce message!")
+				}
 			} else {
 				eventLogger.Debug("Produced message.")
 			}
