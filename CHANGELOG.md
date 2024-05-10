@@ -23,6 +23,12 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.32.0] - 2024-05-07
+
+### Added
+
+- CASMHMS-6202 - Added custom logging featues to log messages per xname
+
 ## [2.31.0] - 2024-04-19
 
 ### Changed

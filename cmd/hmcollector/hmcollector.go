@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -82,6 +82,14 @@ var (
 	caURI            = flag.String("hmcollector_ca_uri", "", "URI of the CA cert bundle.")
 	logInsecFailover = flag.Bool("hmcollector_log_insecure_failover", true, "Log/don't log TLS insecure failovers.")
 	httpTimeout      = flag.Int("http_timeout", 10, "Timeout in seconds for HTTP operations.")
+
+	// vars for custom logging configuration
+	logModesEnv        = ""
+	logXnamesEnv       = ""
+	shouldLogErrors    = false
+	shouldLogForXnames = false
+	logXnames          = make(map[string]struct{})
+	logAllowedModes    = []string{"errors"}
 
 	// This is really a hacky option that should only be used when incoming timestamps can't be trusted.
 	// For example, if NTP isn't working and the controllers are reporting their time as from 1970.
@@ -189,6 +197,15 @@ func doUpdateHSMEndpoints() {
 	logger.Info("HSM endpoint monitoring routine shutdown.")
 }
 
+func fillMap(m map[string]struct{}, values string) {
+	if values != "" {
+		for _, v := range strings.Split(values, ",") {
+			m[v] = struct{}{}
+		}
+	}
+
+}
+
 func SetupLogging() {
 	logLevel := os.Getenv("LOG_LEVEL")
 	logLevel = strings.ToUpper(logLevel)
@@ -217,6 +234,32 @@ func SetupLogging() {
 		atomicLevel.SetLevel(zap.PanicLevel)
 	default:
 		atomicLevel.SetLevel(zap.InfoLevel)
+	}
+
+	// setup the custom logging config
+	logModesEnv = os.Getenv("LOG_MODES")
+	logModes := make(map[string]struct{})
+	fillMap(logModes, logModesEnv)
+	_, shouldLogErrors = logModes["errors"]
+	logXnamesEnv = os.Getenv("LOG_XNAMES")
+	fillMap(logXnames, logXnamesEnv)
+	shouldLogForXnames = len(logXnames) > 0
+
+	// log the custom logging config
+	logger.Info("Extended logging config", zap.String("modes", logModesEnv), zap.String("xnames", logXnamesEnv), zap.Any("supported modes", logAllowedModes))
+	for mode, _ := range logModes {
+		validMode := false
+		for _, allowedMode := range logAllowedModes {
+			if mode == allowedMode {
+				validMode = true
+				break
+			}
+		}
+		if !validMode {
+			logger.Error("Invalid log mode in LOG_MODES environment variable",
+				zap.String("invalid mode", mode),
+				zap.Any("supported modes", logAllowedModes))
+		}
 	}
 }
 
