@@ -23,6 +23,12 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+## [2.33.0] - 2024-05-28
+
+### Added
+
+- CASMHMS-6208 - Handle Foxconn Paradise OpenBmc power events
+
 ## [2.32.0] - 2024-05-07
 
 ### Added
