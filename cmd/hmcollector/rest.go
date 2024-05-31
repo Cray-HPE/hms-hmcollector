@@ -79,8 +79,18 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 	} else {
 		var evObjs []map[string]interface{}
 		if e = json.Unmarshal(evBytes, &evObjs); e != nil {
-			marshalErr(evBytes, e)
-			return
+			// Try parsing the bytes as a single event object
+			// Paradise BMCs return an object instead of an array of objects for the Events field
+			var singleEvObj map[string]interface{}
+			if e2 := json.Unmarshal(evBytes, &singleEvObj); e2 != nil {
+				// return the original parse error
+				marshalErr(evBytes, e)
+				return
+			} else {
+				// convert the result to an array
+				evObjs = make([]map[string]interface{}, 1)
+				evObjs[0] = singleEvObj
+			}
 		}
 		for _, ev := range evObjs {
 			s, ok := ev["OriginOfCondition"].(string)
