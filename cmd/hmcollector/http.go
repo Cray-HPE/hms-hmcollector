@@ -106,7 +106,7 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 		}
 	} else {
 		endpointLogger.Info("JW_DEBUG: doHTTPAction(): Got response from endpoint",
-			zap.Int("statusCode", resp.StatusCode
+			zap.Int("statusCode", resp.StatusCode))
 	}
 
 	// Get the payload.
