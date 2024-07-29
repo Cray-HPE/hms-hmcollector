@@ -229,12 +229,14 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 	fullURL := fmt.Sprintf("%s/redfish/v1/EventService/Subscriptions", baseEndpointURL)
 	payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 	if err != nil {
+		logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (1) failed: %v", zap.Error(err))
 		return false, err
 	}
 
 	var subList hmcollector.EventSubscriptionCollection
 	err = json.Unmarshal(payloadBytes, &subList)
 	if err != nil {
+		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (1) failed: %v", zap.Error(err))
 		return false, err
 	}
 
@@ -243,12 +245,14 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 
 		payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 		if err != nil {
+			logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (2) failed: %v", zap.Error(err))
 			return false, err
 		}
 
 		var eventSub hmcollector.EventSubscription
 		err = json.Unmarshal(payloadBytes, &eventSub)
 		if err != nil {
+			logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: %v", zap.Error(err))
 			return false, err
 		}
 		if eventSub.Destination == getDestination(endpoint) {
@@ -297,6 +301,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 				// context (can happen when a node changes xname CASMHMS-3200).  If
 				// successfully updated return as a valid match.  If the update was unsuccessful
 				// it attempted to delete the subscription, so return no match.
+				logger.Error("JW_DEBUG: isDupRFSubscription: match=%v", zap.Bool("match", match))
 				return match, nil
 			}
 		} else {
@@ -306,6 +311,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 			}
 		}
 	}
+	logger.Error("JW_DEBUG: isDupRFSubscription: no matching subscription found")
 	return false, nil
 }
 

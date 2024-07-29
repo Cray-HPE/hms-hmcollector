@@ -25,10 +25,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
+
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"go.uber.org/zap"
 )
 
 func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
@@ -103,6 +104,8 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 				return
 			}
 		}
+	} else if resp.StatusCode == http.StatusNotFound {
+		endpointLogger.Error("Got 404 response from endpoint")
 	}
 
 	// Get the payload.
