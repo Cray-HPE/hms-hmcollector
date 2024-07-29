@@ -104,8 +104,9 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 				return
 			}
 		}
-	} else if resp.StatusCode == http.StatusNotFound {
-		endpointLogger.Error("Got 404 response from endpoint")
+	} else {
+		endpointLogger.Info("JW_DEBUG: doHTTPAction(): Got response from endpoint",
+			zap.Int("statusCode", resp.StatusCode
 	}
 
 	// Get the payload.

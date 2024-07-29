@@ -193,8 +193,9 @@ func deleteSubscriptionForWrongXname(endpoint *rf.RedfishEPDescription, subUri s
 func getSubscriptions(endpoint *rf.RedfishEPDescription) (*hmcollector.EventSubscriptionCollection, error) {
 	baseEndpointURL := "https://" + endpoint.FQDN
 	fullURL := fmt.Sprintf("%s/redfish/v1/EventService/Subscriptions", baseEndpointURL)
-	payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+	payloadBytes, sc, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 	if err != nil {
+			logger.Error("JW_DEBUG: getSubscription: doHTTPAction() failed: ", zap.Error(err), zap.Int("statusCode", sc), zap.String("xname", endpoint.ID))
 		return nil, err
 	}
 
@@ -210,8 +211,9 @@ func getSubscription(endpoint *rf.RedfishEPDescription, subUri string) (*hmcolle
 	baseEndpointURL := "https://" + endpoint.FQDN
 	fullURL := baseEndpointURL + subUri
 
-	payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+	payloadBytes, sc, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 	if err != nil {
+		logger.Error("JW_DEBUG: getSubscription: doHTTPAction() failed: ", zap.Error(err), zap.Int("statusCode", sc), zap.String("xname", endpoint.ID))
 		return nil, err
 	}
 
@@ -227,32 +229,32 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 	baseEndpointURL := "https://" + endpoint.FQDN
 
 	fullURL := fmt.Sprintf("%s/redfish/v1/EventService/Subscriptions", baseEndpointURL)
-	payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+	payloadBytes, sc, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 	if err != nil {
-		logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (1) failed: %v", zap.Error(err))
+		logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (1) failed: ", zap.Error(err), zap.Int("statusCode", sc), zap.String("xname", endpoint.ID))
 		return false, err
 	}
 
 	var subList hmcollector.EventSubscriptionCollection
 	err = json.Unmarshal(payloadBytes, &subList)
 	if err != nil {
-		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (1) failed: %v", zap.Error(err))
+		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (1) failed: ", zap.Error(err), zap.String("xname", endpoint.ID))
 		return false, err
 	}
 
 	for _, sub := range subList.Members {
 		fullURL = baseEndpointURL + sub.OId
 
-		payloadBytes, _, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
+		payloadBytes, sc, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 		if err != nil {
-			logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (2) failed: %v", zap.Error(err))
+			logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (2) failed: ", zap.Error(err), zap.Int("statusCode", sc), zap.String("xname", endpoint.ID))
 			return false, err
 		}
 
 		var eventSub hmcollector.EventSubscription
 		err = json.Unmarshal(payloadBytes, &eventSub)
 		if err != nil {
-			logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: %v", zap.Error(err))
+		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: ", zap.Error(err), zap.String("xname", endpoint.ID))
 			return false, err
 		}
 		if eventSub.Destination == getDestination(endpoint) {
@@ -301,7 +303,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 				// context (can happen when a node changes xname CASMHMS-3200).  If
 				// successfully updated return as a valid match.  If the update was unsuccessful
 				// it attempted to delete the subscription, so return no match.
-				logger.Error("JW_DEBUG: isDupRFSubscription: match=%v", zap.Bool("match", match))
+				logger.Error("JW_DEBUG: isDupRFSubscription: matched", zap.String("xname", endpoint.ID), zap.Bool("match", match))
 				return match, nil
 			}
 		} else {
@@ -311,7 +313,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 			}
 		}
 	}
-	logger.Error("JW_DEBUG: isDupRFSubscription: no matching subscription found")
+	logger.Error("JW_DEBUG: isDupRFSubscription: no matching subscription found", zap.String("xname", endpoint.ID))
 	return false, nil
 }
 
