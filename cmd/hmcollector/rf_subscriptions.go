@@ -61,6 +61,7 @@ func getDestination(endpoint *rf.RedfishEPDescription) string {
 			zap.String("restURL", *restURL),
 			zap.Error(err))
 	}
+	// JW_TODO: Any way to avoid this http call to every BMC when we know Paradise and Mountain will not have iLO?
 	if destination.Scheme == "http" && checkILO(endpoint) {
 		// iLO requires https
 		destination.Scheme = "https"
@@ -257,13 +258,17 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: ", zap.Error(err), zap.String("xname", endpoint.ID))
 			return false, err
 		}
+		logger.Error("JW_DEBUG: isDupRFSubscription: eventSub", zap.Any("eventSub", eventSub))
 		if eventSub.Destination == getDestination(endpoint) {
+			logger.Error("JW_DEBUG: isDupRFSubscription: Destination matches")
 			// Matches this destination, make sure the registry prefix is one we created.
 			match := false
 			if (registryPrefixes == nil || len(registryPrefixes) == 0) &&
 				(eventSub.RegistryPrefixes == nil || len(eventSub.RegistryPrefixes) == 0) {
 				match = true
+				logger.Error("JW_DEBUG: isDupRFSubscription: X")
 			} else if registryPrefixes != nil {
+				logger.Error("JW_DEBUG: isDupRFSubscription: Y")
 				hasAllRegistryPrefixes := true
 				for _, necessaryRegistryPrefix := range registryPrefixes {
 					hasThisRegistryPrefix := false
@@ -307,6 +312,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 				return match, nil
 			}
 		} else {
+			logger.Error("JW_DEBUG: isDupRFSubscription: else clause")
 			if *pruneOldSubscriptions &&
 				isSubscriptionForWrongXname(endpoint.ID, &eventSub) {
 				deleteSubscriptionForWrongXname(endpoint, sub.OId, &eventSub)
@@ -408,7 +414,11 @@ func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 					logger.Warn("Endpoint missing subscription...resetting status to re-attempt add.",
 						zap.String("xname", inSub.Endpoint.ID),
 						zap.Strings("registryPrefixGroup", registryPrefixGroup))
-					*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
+					if inSub.Endpoint.ID == "x3000c0s33b1" {
+						logger.Warn("JW_DEBUG: rfVerifySub: x3000c0s33b1 missing subscription - NOT RESETTING")
+					} else {
+						*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
+					}
 					continue
 				}
 			}
