@@ -232,43 +232,44 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 	fullURL := fmt.Sprintf("%s/redfish/v1/EventService/Subscriptions", baseEndpointURL)
 	payloadBytes, sc, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 	if err != nil {
-		logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (1) failed: ", zap.Error(err), zap.Int("statusCode", sc), zap.String("xname", endpoint.ID))
+		logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (1) failed: ", zap.String("xname", endpoint.ID), zap.Error(err), zap.Int("statusCode", sc))
 		return false, err
 	}
 
 	var subList hmcollector.EventSubscriptionCollection
 	err = json.Unmarshal(payloadBytes, &subList)
 	if err != nil {
-		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (1) failed: ", zap.Error(err), zap.String("xname", endpoint.ID))
+		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (1) failed: ", zap.String("xname", endpoint.ID), zap.Error(err))
 		return false, err
 	}
+	logger.Error("JW_DEBUG: isDupRFSubscription: SUBSCRIPTION LIST subList", zap.String("xname", endpoint.ID), zap.Any("eventSub", subList))
 
 	for _, sub := range subList.Members {
 		fullURL = baseEndpointURL + sub.OId
 
 		payloadBytes, sc, err := doHTTPAction(endpoint, http.MethodGet, fullURL, nil)
 		if err != nil {
-			logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (2) failed: ", zap.Error(err), zap.Int("statusCode", sc), zap.String("xname", endpoint.ID))
+			logger.Error("JW_DEBUG: isDupRFSubscription: doHTTPAction() (2) failed: ", zap.String("xname", endpoint.ID), zap.Error(err), zap.Int("statusCode", sc))
 			return false, err
 		}
 
 		var eventSub hmcollector.EventSubscription
 		err = json.Unmarshal(payloadBytes, &eventSub)
 		if err != nil {
-		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: ", zap.Error(err), zap.String("xname", endpoint.ID))
+		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: ", zap.String("xname", endpoint.ID), zap.Error(err))
 			return false, err
 		}
-		logger.Error("JW_DEBUG: isDupRFSubscription: eventSub", zap.Any("eventSub", eventSub))
+		logger.Error("JW_DEBUG: isDupRFSubscription: ACTUAL SUBSCRIPTION eventSub", zap.String("xname", endpoint.ID), zap.Any("eventSub", eventSub))
 		if eventSub.Destination == getDestination(endpoint) {
-			logger.Error("JW_DEBUG: isDupRFSubscription: Destination matches")
+			logger.Error("JW_DEBUG: isDupRFSubscription: Destination matches", zap.String("xname", endpoint.ID))
 			// Matches this destination, make sure the registry prefix is one we created.
 			match := false
 			if (registryPrefixes == nil || len(registryPrefixes) == 0) &&
 				(eventSub.RegistryPrefixes == nil || len(eventSub.RegistryPrefixes) == 0) {
 				match = true
-				logger.Error("JW_DEBUG: isDupRFSubscription: X")
+				logger.Error("JW_DEBUG: isDupRFSubscription: X", zap.String("xname", endpoint.ID))
 			} else if registryPrefixes != nil {
-				logger.Error("JW_DEBUG: isDupRFSubscription: Y")
+				logger.Error("JW_DEBUG: isDupRFSubscription: Y", zap.String("xname", endpoint.ID))
 				hasAllRegistryPrefixes := true
 				for _, necessaryRegistryPrefix := range registryPrefixes {
 					hasThisRegistryPrefix := false
@@ -312,7 +313,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 				return match, nil
 			}
 		} else {
-			logger.Error("JW_DEBUG: isDupRFSubscription: else clause")
+			logger.Error("JW_DEBUG: isDupRFSubscription: else clause", zap.String("xname", endpoint.ID))
 			if *pruneOldSubscriptions &&
 				isSubscriptionForWrongXname(endpoint.ID, &eventSub) {
 				deleteSubscriptionForWrongXname(endpoint, sub.OId, &eventSub)
