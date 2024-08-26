@@ -415,8 +415,8 @@ func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 					logger.Warn("Endpoint missing subscription...resetting status to re-attempt add.",
 						zap.String("xname", inSub.Endpoint.ID),
 						zap.Strings("registryPrefixGroup", registryPrefixGroup))
-					if inSub.Endpoint.ID == "x3000c0s33b1" {
-						logger.Warn("JW_DEBUG: rfVerifySub: x3000c0s33b1 missing subscription - NOT RESETTING")
+					if inSub.Endpoint.ID == "x3000c0s33b2" {
+						logger.Warn("JW_DEBUG: rfVerifySub: x3000c0s33b2 missing subscription - NOT RESETTING")
 					} else {
 						*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
 					}
