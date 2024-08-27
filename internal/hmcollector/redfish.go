@@ -153,17 +153,18 @@ type RFOem struct {
 }
 
 type EventSubscription struct {
-	OContext         string `json:"@odata.context,omitempty"`
-	Oid              string `json:"@odata.id,omitempty"`
-	Otype            string `json:"@odata.type,omitempty"`
-	Id               string `json:",omitempty"`
-	Name             string `json:",omitempty"`
-	Context          string `json:",omitempty"`
-	Destination      string
-	EventTypes       []string `json:",omitempty"`
-	Protocol         string
-	RegistryPrefixes []string `json:",omitempty"`
-	Oem              *RFOem   `json:",omitempty"`
+	OContext         	string `json:"@odata.context,omitempty"`
+	Oid              	string `json:"@odata.id,omitempty"`
+	Otype            	string `json:"@odata.type,omitempty"`
+	Id               	string `json:",omitempty"`
+	Name             	string `json:",omitempty"`
+	Context          	string `json:",omitempty"`
+	DeliveryRetryPolicy string `json:",omitempty"`
+	Destination      	string
+	EventTypes       	[]string `json:",omitempty"`
+	Protocol         	string
+	RegistryPrefixes 	[]string `json:",omitempty"`
+	Oem              	*RFOem   `json:",omitempty"`
 }
 
 func (eventSubscription EventSubscription) String() string {

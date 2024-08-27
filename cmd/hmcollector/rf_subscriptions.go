@@ -91,6 +91,11 @@ func postRFSubscription(endpoint *rf.RedfishEPDescription, evTypes []string, reg
 		RegistryPrefixes: registryPrefixes,
 	}
 
+	// Foxconn Paradise requires DeliveryRetryPolicy be set to RetryForever
+	if checkOpenBmc(endpoint) {
+		sub.DeliveryRetryPolicy = "RetryForever"
+	}
+
 	payloadBytes, err := json.Marshal(sub)
 	if err != nil {
 		return subscribed, err

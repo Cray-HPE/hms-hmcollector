@@ -96,6 +96,7 @@ func httpGetRedfishType(endpoint *rf.RedfishEPDescription) RfType {
 	return UnknownRfType
 }
 
+// JW_TODO: Make sure crayrf looks for proper model strings here
 func isOpenBmcModel(model string) bool {
 	// Paradise has had these values for Model field in /redfish/v1/Chassis/BMC_0
 	//   P4352/P4353
