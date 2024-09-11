@@ -262,8 +262,8 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 		var eventSub hmcollector.EventSubscription
 		err = json.Unmarshal(payloadBytes, &eventSub)
 		if err != nil {
-		logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: ", zap.String("xname", endpoint.ID), zap.Error(err))
-			return false, err
+			logger.Error("JW_DEBUG: isDupRFSubscription: json.Unmarshal() (2) failed: ", zap.String("xname", endpoint.ID), zap.Error(err))
+						 return false, err
 		}
 		logger.Error("JW_DEBUG: isDupRFSubscription: ACTUAL SUBSCRIPTION eventSub", zap.String("xname", endpoint.ID), zap.Any("eventSub", eventSub))
 		if eventSub.Destination == getDestination(endpoint) {
@@ -421,8 +421,8 @@ func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 					logger.Warn("Endpoint missing subscription...resetting status to re-attempt add.",
 						zap.String("xname", inSub.Endpoint.ID),
 						zap.Strings("registryPrefixGroup", registryPrefixGroup))
-					if inSub.Endpoint.ID == "x3000c0s33b2" {
-						logger.Warn("JW_DEBUG: rfVerifySub: x3000c0s33b2 missing subscription - NOT RESETTING")
+					//if inSub.Endpoint.ID == "x3000c0s33b2" {
+					//	logger.Warn("JW_DEBUG: rfVerifySub: x3000c0s33b2 missing subscription - NOT RESETTING")
 					} else {
 						*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
 					}
