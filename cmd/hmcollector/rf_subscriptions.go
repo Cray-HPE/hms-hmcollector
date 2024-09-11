@@ -423,9 +423,9 @@ func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 						zap.Strings("registryPrefixGroup", registryPrefixGroup))
 					//if inSub.Endpoint.ID == "x3000c0s33b2" {
 					//	logger.Warn("JW_DEBUG: rfVerifySub: x3000c0s33b2 missing subscription - NOT RESETTING")
-					} else {
+					//} else {
 						*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
-					}
+					//}
 					continue
 				}
 			}
