@@ -27,8 +27,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"github.com/Cray-HPE/hms-smd/pkg/redfish"
+
 	"github.com/Cray-HPE/hms-certs/pkg/hms_certs"
+	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 )
 
 func GetEndpointList(httpClient *hms_certs.HTTPClientPair, gatewayUrl string) ([]rf.RedfishEPDescription, error) {
@@ -39,6 +40,7 @@ func GetEndpointList(httpClient *hms_certs.HTTPClientPair, gatewayUrl string) ([
 		return nil,fmt.Errorf("Unable to create HTTP request: %v",qerr)
 	}
 	rsp,serr := httpClient.Do(request)
+	defer DrainAndCloseBody(rsp)
 	if (serr != nil) {
 		return nil, fmt.Errorf("Error in HTTP request: %v",serr)
 	}

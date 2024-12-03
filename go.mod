@@ -1,6 +1,6 @@
 module github.com/Cray-HPE/hms-hmcollector
 
-go 1.16
+go 1.23
 
 require (
 	github.com/Cray-HPE/hms-base v1.15.0

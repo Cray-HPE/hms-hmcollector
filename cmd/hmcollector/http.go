@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
+
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"go.uber.org/zap"
 )
 
 func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
@@ -59,10 +60,8 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 
 	rfClientLock.RLock()
 	resp, doErr = rfClient.Do(request)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
 	rfClientLock.RUnlock()
+	defer DrainAndCloseResponseBody(resp)
 	if doErr != nil {
 		endpointLogger.Error("Unable to do request!", 
 			zap.Error(doErr), zap.String("fullURL", fullURL))
@@ -75,11 +74,6 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 	// If so, refresh the credentials in Vault.
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		endpointLogger.Warn("Got Unauthorized response from endpoint, refreshing credentials...")
-
-		//Drain the unused response body.
-		if (resp.Body != nil) {
-			_,_ = ioutil.ReadAll(resp.Body)
-		}
 
 		// Keep track of the previous credentials to see if they change.
 		previousUsername := endpoint.User

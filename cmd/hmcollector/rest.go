@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2023] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2024] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -116,6 +116,7 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 
 func parseRequest(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
+	DrainAndCloseRequestBody(r)
 	if err != nil {
 		logger.Error("Unable to ready body!", zap.Error(err))
 		return
@@ -237,6 +238,7 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 // Kubernetes liveness probe - if this responds with anything other than success (code <400) it will cause the
 // pod to be restarted (eventually).
 func doLiveness(w http.ResponseWriter, r *http.Request) {
+	defer DrainAndCloseRequestBody(r)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -244,6 +246,8 @@ func doLiveness(w http.ResponseWriter, r *http.Request) {
 // Kubernetes liveness probe - if this responds with anything other than success (code <400) multiple times in
 // a row it will cause the pod to be restarted.  Only fail this probe for issues that we expect a restart to fix.
 func doReadiness(w http.ResponseWriter, r *http.Request) {
+	defer DrainAndCloseRequestBody(r)
+
 	ready := true
 
 	// If the Kafka bus isn't good, then return not ready since any incoming data will be dropped.  A restart may not
@@ -281,6 +285,8 @@ type EndpointStatus struct {
 }
 
 func doHealth(w http.ResponseWriter, r *http.Request) {
+	defer DrainAndCloseRequestBody(r)
+
 	// Only allow 'GET' calls.
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
