@@ -25,6 +25,7 @@ package hmcollector
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -40,7 +41,13 @@ func GetEndpointList(httpClient *hms_certs.HTTPClientPair, gatewayUrl string) ([
 		return nil,fmt.Errorf("Unable to create HTTP request: %v",qerr)
 	}
 	rsp,serr := httpClient.Do(request)
-	defer DrainAndCloseBody(rsp)
+	defer func () {
+		if rsp != nil && rsp.Body != nil {
+				_, _ = io.Copy(io.Discard, rsp.Body)
+				rsp.Body.Close()
+		}
+	}()
+
 	if (serr != nil) {
 		return nil, fmt.Errorf("Error in HTTP request: %v",serr)
 	}
