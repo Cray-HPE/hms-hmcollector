@@ -58,7 +58,7 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 	var resp *http.Response
 	var doErr error
 
-	rfClientLock.RLock()
+	rfClientLock.RLock()	// TODO: Are locks really necessary here?
 	resp, doErr = rfClient.Do(request)
 	rfClientLock.RUnlock()
 	defer DrainAndCloseResponseBody(resp)

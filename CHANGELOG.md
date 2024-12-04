@@ -29,6 +29,7 @@ Security - in case of vulnerabilities
 ### Fixed
 
 - Resolved some scaling/resource issues
+- Updated version of Go to 1.23
 
 ## [2.33.0] - 2024-05-28
 
