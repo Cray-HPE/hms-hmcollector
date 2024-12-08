@@ -118,7 +118,7 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	DrainAndCloseRequestBody(r)
 	if err != nil {
-		logger.Error("Unable to ready body!", zap.Error(err))
+		logger.Error("Unable to read body!", zap.Error(err))
 		return
 	}
 
