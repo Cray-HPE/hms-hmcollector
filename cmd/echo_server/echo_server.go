@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2020-2022,2024 Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -72,6 +73,15 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 		log.Println(string(prettyJSON.Bytes()) + "\n") // Debug
 	}
 
+	// While it is generally not a requirement to close request bodies in server
+	// handlers, it is good practice.  If a body is only partially read, there can
+	// be a resource leak.  Additionally, if the body is not read at all, the
+	// network connection will be closed and will not be reused even though the
+	// http server will properly drain and close the request body.
+	if r != nil && r.Body != nil {
+		_, _ = io.Copy(io.Discard, r.Body) // ok even if already drained
+		r.Body.Close()
+	}
 }
 
 func main() {
