@@ -23,6 +23,14 @@ Removed - for now removed features
 Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
+
+## [2.34.0] - 2024-12-06
+
+### Fixed
+
+- Resolved some scaling/resource issues
+- Updated version of Go to 1.23
+
 ## [2.33.0] - 2024-05-28
 
 ### Added

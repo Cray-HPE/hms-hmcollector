@@ -25,6 +25,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -204,6 +205,27 @@ func fillMap(m map[string]struct{}, values string) {
 		}
 	}
 
+}
+
+// While it is generally not a requirement to close request bodies in server
+// handlers, it is good practice.  If a body is only partially read, there can
+// be a resource leak.  Additionally, if the body is not read at all, the
+// network connection will be closed and will not be reused even though the
+// http server will properly drain and close the request body.
+func DrainAndCloseRequestBody(req *http.Request) {
+       if req != nil && req.Body != nil {
+               _, _ = io.Copy(io.Discard, req.Body) // ok even if already drained
+               req.Body.Close()
+       }
+}
+
+// Response bodies should always be drained and closed, else we leak resources
+// and fail to reuse network connections.
+func DrainAndCloseResponseBody(resp *http.Response) {
+       if resp != nil && resp.Body != nil {
+               _, _ = io.Copy(io.Discard, resp.Body) // ok even if already drained
+               resp.Body.Close()
+       }
 }
 
 func SetupLogging() {
