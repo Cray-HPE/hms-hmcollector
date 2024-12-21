@@ -24,6 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.35.0] - 2025-01-08
+
+### Added
+
+- Added support for ppprof builds
+
 ## [2.34.0] - 2024-12-06
 
 ### Fixed
