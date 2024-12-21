@@ -55,9 +55,9 @@ ARG ENABLE_PPROF=true
 
 # Conditionally build with the pprof tag if profiling is enabled
 RUN if [ "$ENABLE_PPROF" = "true" ]; then \
-	set -ex && go build -v -tags pprof -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector \
+	set -ex && go build -v -tags pprof -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector; \
     else \
-	set -ex && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector \
+	set -ex && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector; \
     fi
 
 ## Final Stage ###
