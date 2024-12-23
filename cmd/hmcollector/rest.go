@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2024] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -346,6 +346,10 @@ func doRest() {
 	http.HandleFunc("/liveness", doLiveness)
 	// Health function for Kubernetes liveness/readiness.
 	http.HandleFunc("/health", doHealth)
+
+	// If the 'pprof' build tag is set, then this will register pprof handlers,
+	// otherwise this function is stubbed and will do nothing.
+	hmcollector.RegisterPProfHandlers()
 
 	go func() {
 		defer WaitGroup.Done()
