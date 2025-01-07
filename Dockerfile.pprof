@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright [2019-2022,2024] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2019-2022,2024-2025] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# Dockerfile for building HMS Redfish Collector.
+# Dockerfile for building HMS Redfish Collector with pprof support.
+# The only difference from primary dockerfile is building with the pprof tag
 
 # v1.1.0 of Confluent Go Kafka requires at least v1.1.0 of librdkafka.
 ARG LIBRDKAFKA_VER_MIN=1.1.0
@@ -50,8 +51,7 @@ COPY vendor     $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/vendor
 ### Build Stage ###
 FROM base AS builder
 
-RUN set -ex \
-    && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
+RUN set -ex && go build -v -tags pprof -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
 
 ## Final Stage ###
 
