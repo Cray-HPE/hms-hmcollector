@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright [2019-2022] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2019-2022,2025] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -25,10 +25,13 @@ NAME ?= hms-hmcollector
 VERSION ?= $(shell cat .version)
 DOCKER_IMAGE ?= ${NAME}:${VERSION}
 
-all: image unittest snyk
+all: image image-pprof unittest snyk
 
 image:
 	docker build ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}:${VERSION}' .
+
+image-pprof:
+	docker build -f Dockerfile.pprof ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}-pprof:${VERSION}' .
 
 unittest:
 	docker build -f Dockerfile.testing ${NO_CACHE} --pull ${DOCKER_ARGS} --tag '${NAME}-unittest:${VERSION}' .
