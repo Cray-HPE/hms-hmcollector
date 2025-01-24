@@ -32,7 +32,7 @@ import (
 
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	"github.com/Cray-HPE/hms-hmcollector/internal/river_collector"
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 )
