@@ -25,6 +25,10 @@ github.com/IBM/sarama
 # github.com/cenkalti/backoff/v4 v4.3.0
 ## explicit; go 1.18
 github.com/cenkalti/backoff/v4
+# github.com/confluentinc/confluent-kafka-go/v2 v2.8.0
+## explicit; go 1.21
+github.com/confluentinc/confluent-kafka-go/v2/kafka
+github.com/confluentinc/confluent-kafka-go/v2/kafka/librdkafka_vendor
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -212,6 +216,3 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.6.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# gopkg.in/confluentinc/confluent-kafka-go.v1 v1.1.0
-## explicit
-gopkg.in/confluentinc/confluent-kafka-go.v1/kafka

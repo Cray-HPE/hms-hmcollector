@@ -25,7 +25,7 @@ package hmcollector
 import (
 	"fmt"
 
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 )
 

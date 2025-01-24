@@ -10,9 +10,9 @@ require (
 	github.com/Cray-HPE/hms-smd/v2 v2.33.0
 	github.com/Cray-HPE/hms-xname v1.4.0
 	github.com/IBM/sarama v1.45.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.8.0
 	github.com/namsral/flag v1.7.4-pre
 	go.uber.org/zap v1.27.0
-	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.1.0
 )
 
 require (
