@@ -30,10 +30,10 @@ import (
 	"sync"
 	"time"
 
-	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	"github.com/Cray-HPE/hms-hmcollector/internal/river_collector"
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 )
 
@@ -70,7 +70,7 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 
 		// For HPE PDUs, there are ~55 URLs to poll for telemetry and it takes >1min
 		// to poll them all. Slow down the polling interval for just these endpoints.
-		if base.GetHMSType(endpoint.Endpoint.ID) == base.CabinetPDUController &&
+		if xnametypes.GetHMSType(endpoint.Endpoint.ID) == xnametypes.CabinetPDUController &&
 			time.Since(*endpoint.LastContacted) < (time.Second*time.Duration(*pduPollingInterval)) {
 			continue
 		}
@@ -82,7 +82,7 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 				continue
 			}
 			for i, fullURL := range fullURLs {
-				if base.GetHMSType(endpoint.Endpoint.ID) == base.CabinetPDUController && i > 0 {
+				if xnametypes.GetHMSType(endpoint.Endpoint.ID) == xnametypes.CabinetPDUController && i > 0 {
 					// HPE PDUs can't handle a bunch of requests even in serial.
 					// Add a wait here to space them out a bit.
 					time.Sleep(time.Second * 1)
@@ -208,7 +208,7 @@ func monitorPollingEndpoints() {
 				var model string
 				var err error
 
-				if base.GetHMSType(endpoint.ID) == base.CabinetPDUController {
+				if xnametypes.GetHMSType(endpoint.ID) == xnametypes.CabinetPDUController {
 					var pdu hmcollector.RackPDU
 
 					// HPE PDU

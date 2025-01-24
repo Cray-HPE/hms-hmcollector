@@ -8,7 +8,7 @@ require (
 	github.com/Cray-HPE/hms-compcredentials v1.11.2
 	github.com/Cray-HPE/hms-securestorage v1.12.2
 	github.com/Cray-HPE/hms-smd v1.30.9
-	github.com/Cray-HPE/hms-xname v1.1.0
+	github.com/Cray-HPE/hms-xname v1.4.0
 	github.com/Shopify/sarama v1.23.1
 	github.com/namsral/flag v1.7.4-pre
 	go.uber.org/zap v1.15.0

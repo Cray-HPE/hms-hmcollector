@@ -33,7 +33,6 @@ import (
 	"sync"
 	"time"
 
-	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
@@ -564,7 +563,7 @@ func doRFSubscribe() {
 		for _, newEndpoint := range hsmEndpointsCache {
 			// HPE PDUs don't support subscriptions properly. To prevent tipping it over,
 			// don't try subscribe to them.
-			if base.GetHMSType(newEndpoint.ID) == base.CabinetPDUController &&
+			if xnametypes.GetHMSType(newEndpoint.ID) == xnametypes.CabinetPDUController &&
 				!strings.Contains(newEndpoint.FQDN, "rts") {
 				continue
 			}
