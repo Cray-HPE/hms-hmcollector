@@ -51,7 +51,7 @@ COPY vendor     $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/vendor
 ### Build Stage ###
 FROM base AS builder
 
-RUN set -ex && go build -v -tags pprof -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
+RUN set -ex && go build -v -tags "musl pprof" -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
 
 ## Final Stage ###
 
