@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021,2024] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024-2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -38,11 +38,11 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	base "github.com/Cray-HPE/hms-base"
+	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-certs/pkg/hms_certs"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 	"github.com/Cray-HPE/hms-hmcollector/internal/river_collector"
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 )
 
 const NumWorkers = 30

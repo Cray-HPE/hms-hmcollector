@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2021,2024] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2021,2024-2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@ import (
 	"unicode"
 
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 )
 
 func (collector HPEPDURiverCollector) ParseJSONPowerEvents(payloadBytes []byte,

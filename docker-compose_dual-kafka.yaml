@@ -1,4 +1,3 @@
-version: '3'
 services:
   zookeeper1:
     image: artifactory.algol60.net/docker.io/confluentinc/cp-zookeeper:6.1.1

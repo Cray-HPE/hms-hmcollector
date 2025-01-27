@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2024] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2024-2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,7 @@ import (
 	"net/http"
 	"strings"
 
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 )

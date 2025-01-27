@@ -1,6 +1,6 @@
 # MIT License
 #
-# (C) Copyright [2019-2022,2024] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2019-2022,2024-2025] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -51,11 +51,11 @@ COPY vendor     $GOPATH/src/github.com/Cray-HPE/hms-hmcollector/vendor
 FROM base AS builder
 
 RUN set -ex \
-    && go build -v -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
+    && go build -v -tags musl -o /usr/local/bin/hmcollector github.com/Cray-HPE/hms-hmcollector/cmd/hmcollector
 
 ## Final Stage ###
 
-FROM artifactory.algol60.net/docker.io/alpine:3.15
+FROM artifactory.algol60.net/docker.io/alpine:3.21
 LABEL maintainer="Hewlett Packard Enterprise"
 EXPOSE 80
 

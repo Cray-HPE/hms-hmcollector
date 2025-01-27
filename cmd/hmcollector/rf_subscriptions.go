@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021,2023] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2023,2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -33,9 +33,8 @@ import (
 	"sync"
 	"time"
 
-	base "github.com/Cray-HPE/hms-base"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
-	rf "github.com/Cray-HPE/hms-smd/pkg/redfish"
+	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 	"github.com/Cray-HPE/hms-xname/xnametypes"
 	"go.uber.org/zap"
 )
@@ -564,7 +563,7 @@ func doRFSubscribe() {
 		for _, newEndpoint := range hsmEndpointsCache {
 			// HPE PDUs don't support subscriptions properly. To prevent tipping it over,
 			// don't try subscribe to them.
-			if base.GetHMSType(newEndpoint.ID) == base.CabinetPDUController &&
+			if xnametypes.GetHMSType(newEndpoint.ID) == xnametypes.CabinetPDUController &&
 				!strings.Contains(newEndpoint.FQDN, "rts") {
 				continue
 			}
