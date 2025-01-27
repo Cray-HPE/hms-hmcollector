@@ -24,11 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.36.0] - 2025-01-29
+## [2.36.0] - 2025-01-28
 
 ### Security
 
 - Update image and module dependencies
+- Various code changes to accomodate module updates
 
 ## [2.35.0] - 2025-01-08
 
