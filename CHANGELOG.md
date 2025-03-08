@@ -24,11 +24,12 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.37.0] - 2025-03-11
+## [2.37.0] - 2025-03-10
 
 ### Security
 
 - Update module dependencies related to hms-certs
+- Updated vault override variables due to hms-certs update
 
 ## [2.36.0] - 2025-01-27
 

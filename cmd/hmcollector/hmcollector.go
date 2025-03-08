@@ -294,17 +294,17 @@ func createRFClient() error {
 	//we acquire this lock, all RF operations are blocked until we unlock.
 
 	//For testing/debug only.
-	envstr := os.Getenv("PCS_VAULT_CA_CHAIN_PATH")
+	envstr := os.Getenv("HMCOLLECTOR_VAULT_CA_CHAIN_PATH")
 	if envstr != "" {
 		logger.Info("Replacing default Vault CA Chain with: ", zap.String("", envstr))
 		hms_certs.ConfigParams.CAChainPath = envstr
 	}
-	envstr = os.Getenv("PCS_VAULT_PKI_BASE")
+	envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_BASE")
 	if envstr != "" {
 		logger.Info("Replacing default Vault PKI Base with: ", zap.String("", envstr))
 		hms_certs.ConfigParams.VaultPKIBase = envstr
 	}
-	envstr = os.Getenv("PCS_VAULT_PKI_PATH")
+	envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_PATH")
 	if envstr != "" {
 		logger.Info("Replacing default Vault PKI Path with: ", zap.String("", envstr))
 		hms_certs.ConfigParams.PKIPath = envstr
