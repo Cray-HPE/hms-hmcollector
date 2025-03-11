@@ -294,26 +294,20 @@ func createRFClient() error {
 	//we acquire this lock, all RF operations are blocked until we unlock.
 
 	//For testing/debug only.
-
-	envstr := os.Getenv("HMCOLLECTOR_CA_PKI_URL")
+	envstr := os.Getenv("HMCOLLECTOR_VAULT_CA_CHAIN_PATH")
 	if envstr != "" {
-		logger.Info("Using CA PKI URL: ", zap.String("", envstr))
-		hms_certs.ConfigParams.VaultCAUrl = envstr
+		logger.Info("Replacing default Vault CA Chain with: ", zap.String("", envstr))
+		hms_certs.ConfigParams.CAChainPath = envstr
 	}
-	envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_URL")
+	envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_BASE")
 	if envstr != "" {
-		logger.Info("Using VAULT PKI URL: ", zap.String("", envstr))
-		hms_certs.ConfigParams.VaultPKIUrl = envstr
+		logger.Info("Replacing default Vault PKI Base with: ", zap.String("", envstr))
+		hms_certs.ConfigParams.VaultPKIBase = envstr
 	}
-	envstr = os.Getenv("HMCOLLECTOR_VAULT_JWT_FILE")
+	envstr = os.Getenv("HMCOLLECTOR_VAULT_PKI_PATH")
 	if envstr != "" {
-		logger.Info("Using Vault JWT file: ", zap.String("", envstr))
-		hms_certs.ConfigParams.VaultJWTFile = envstr
-	}
-	envstr = os.Getenv("HMCOLLECTOR_K8S_AUTH_URL")
-	if envstr != "" {
-		logger.Info("Using K8S AUTH URL: ", zap.String("", envstr))
-		hms_certs.ConfigParams.K8SAuthUrl = envstr
+		logger.Info("Replacing default Vault PKI Path with: ", zap.String("", envstr))
+		hms_certs.ConfigParams.PKIPath = envstr
 	}
 
 	//Wait for all reader locks to release, prevent new reader locks.  Once
