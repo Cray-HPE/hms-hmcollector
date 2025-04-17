@@ -24,6 +24,14 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.39.0] - 2025-04-22
+
+### Added
+
+- Added support for pprof builds
+- Fixed jq parsing issue in runSnyk.sh
+- Internal tracking ticket: CASMHMS-6362
+
 ## [2.37.0] - 2025-03-11
 
 ### Security
