@@ -24,11 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
-## [2.38.0] - 2025-04-21
+## [2.38.0] - 2025-04-18
 
 ### Update
 
 - Updated image and module dependencies to latest versions
+- Removed several sections of code that's now redundant with the latest
+  hms-base module
 - Update version of Go to v1.24
 - Internal tracking ticket: CASMHMS-6482 and CASMHMS-6401
 
