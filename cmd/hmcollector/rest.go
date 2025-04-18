@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2024] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2025] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,7 @@ import (
 
 	"go.uber.org/zap"
 
+	base "github.com/Cray-HPE/hms-base/v2"
 	"github.com/Cray-HPE/hms-hmcollector/internal/hmcollector"
 )
 
@@ -116,7 +117,7 @@ func unmarshalEvents(bodyBytes []byte) (events hmcollector.Events, err error) {
 
 func parseRequest(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
-	DrainAndCloseRequestBody(r)
+	base.DrainAndCloseRequestBody(r)
 	if err != nil {
 		logger.Error("Unable to read body!", zap.Error(err))
 		return
@@ -238,7 +239,7 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 // Kubernetes liveness probe - if this responds with anything other than success (code <400) it will cause the
 // pod to be restarted (eventually).
 func doLiveness(w http.ResponseWriter, r *http.Request) {
-	defer DrainAndCloseRequestBody(r)
+	defer base.DrainAndCloseRequestBody(r)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -246,7 +247,7 @@ func doLiveness(w http.ResponseWriter, r *http.Request) {
 // Kubernetes liveness probe - if this responds with anything other than success (code <400) multiple times in
 // a row it will cause the pod to be restarted.  Only fail this probe for issues that we expect a restart to fix.
 func doReadiness(w http.ResponseWriter, r *http.Request) {
-	defer DrainAndCloseRequestBody(r)
+	defer base.DrainAndCloseRequestBody(r)
 
 	ready := true
 
@@ -285,7 +286,7 @@ type EndpointStatus struct {
 }
 
 func doHealth(w http.ResponseWriter, r *http.Request) {
-	defer DrainAndCloseRequestBody(r)
+	defer base.DrainAndCloseRequestBody(r)
 
 	// Only allow 'GET' calls.
 	if r.Method != http.MethodGet {

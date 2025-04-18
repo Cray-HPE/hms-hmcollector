@@ -28,6 +28,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	base "github.com/Cray-HPE/hms-base/v2"
 	rf "github.com/Cray-HPE/hms-smd/v2/pkg/redfish"
 	"go.uber.org/zap"
 )
@@ -61,7 +62,7 @@ func doHTTPAction(endpoint *rf.RedfishEPDescription, method string,
 	rfClientLock.RLock()	// TODO: Are locks really necessary here?
 	resp, doErr = rfClient.Do(request)
 	rfClientLock.RUnlock()
-	defer DrainAndCloseResponseBody(resp)
+	defer base.DrainAndCloseResponseBody(resp)
 	if doErr != nil {
 		endpointLogger.Error("Unable to do request!", 
 			zap.Error(doErr), zap.String("fullURL", fullURL))
