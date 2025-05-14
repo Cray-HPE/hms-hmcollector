@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.39.0] - 2025-05-23
+
+### Fixed
+
+- Fixed lost subscription bug when BMCs reboot
+- Updated image and module dependencies
+
 ## [2.38.0] - 2025-04-18
 
 ### Update
