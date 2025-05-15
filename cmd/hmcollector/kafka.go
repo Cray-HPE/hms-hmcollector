@@ -116,7 +116,7 @@ func handleKafkaEvents(broker *hmcollector.KafkaBroker) {
 					eventLogger.Error("Failed to produce message!")
 				}
 			} else {
-				eventLogger.Debug("Produced message.")
+				//eventLogger.Debug("Produced message.")
 			}
 		}
 	}
