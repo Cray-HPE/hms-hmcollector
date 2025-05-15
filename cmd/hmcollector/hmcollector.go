@@ -261,11 +261,6 @@ func SetupLogging() {
 				zap.Any("supported modes", logAllowedModes))
 		}
 	}
-
-	logger.Info("Logging configuration",
-				zap.Any("logLevel", atomicLevel),
-				zap.String("logModes", logModesEnv),
-				zap.String("logXnames", logXnamesEnv))
 }
 
 // This function is used to set up an HTTP validated/non-validated client
