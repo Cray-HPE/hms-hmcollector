@@ -366,19 +366,20 @@ func doGetEventTypes(endpoint *rf.RedfishEPDescription) ([]string, error) {
 	return evService.EventTypesForSubscription, err
 }
 
-// Verify the subscriptions are still in place
+// rfSubscribe is a goroutine that verifies subscriptions are still in place
+
 func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 	logger.Info("rfVerifySub: Beginning subscription validation monitoring")
 
-	// This endpoint should already have the subscription present, but verify that it is still there.
 	var verifyWaitGroup sync.WaitGroup
 
 	for sub := range verifyRFSubscriptions {
 		// If the subscription is still in the process of being set up or is already in an error state then don't
 		// check it yet.
 		if *sub.Status != hmcollector.RFSUBSTATUS_COMPLETE {
-			logger.Debug("rfVerifySub: Skipping validation of endpoint with subscription in progress",
-					zap.String("xname", sub.Endpoint.ID))
+			logger.Debug("rfVerifySub: Skipping validation of endpoint with subscription in progress or in error state",
+					zap.String("xname", sub.Endpoint.ID),
+					zap.String("status", fmt.Sprintf("%v", *sub.Status)))
 			continue
 		}
 
@@ -452,6 +453,10 @@ func appendUniqueRegPrefix(inPrefix []string, pg *[][]string) {
 	*pg = append(*pg, inPrefix)
 }
 
+// rfSubscribe is a goroutine that runs whehever signalled by the main
+// doRFSubscribe goroutine. This signalling is done if the endpoint is
+// new, or if the endpoint is marked with RFSUBSTATUS_ERROR.
+
 func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 	var subscriptionWaitGroup sync.WaitGroup
 
@@ -475,13 +480,17 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				}
 			}
 
+			// Prune any old subscriptions if no longer valid for this endpoint
 			if *pruneOldSubscriptions {
+				// Retrieve the list of subscriptions directly from the BMC
 				subscriptions, err := getSubscriptions(sub.Endpoint)
 				if err != nil {
 					logger.Error("rfSubscribe: Unable to get list of subscriptions",
 								 zap.String("xname", sub.Endpoint.ID), zap.Error(err))
 				} else {
+					// Process each subscrition in the list
 					for _, member := range subscriptions.Members {
+						// Get the subscription details directly from the BMC
 						eventSub, err := getSubscription(sub.Endpoint, member.OId)
 						if err != nil {
 							logger.Error("rfSubscribe: Unable to get subscription",
@@ -490,7 +499,9 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 								zap.Error(err))
 							continue
 						}
+						// If the subscription is for the wrong xname, delete it.
 						if isSubscriptionForWrongXname(sub.Endpoint.ID, eventSub) {
+							// This was likely due to moved hardware so delete it
 							deleteSubscriptionForWrongXname(sub.Endpoint, member.OId, eventSub)
 						}
 					}
@@ -547,8 +558,16 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 
 					// Make sure the list of all unique registry prefixes is kept up to date.
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
+				} else {
+					logger.Error("rfSubscribe: Redfish subscription not created",
+								 zap.String("xname", sub.Endpoint.ID),
+								 zap.Any("registryPrefix", registryPrefixGroup))
 				}
 			}
+
+			//if *rfStreamingEnabled && rfType == OpenBmcRfType {
+				// tbd
+			//}
 
 			*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 		}(sub)
@@ -558,6 +577,16 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 
 	logger.Info("rfSubscribe: Stopping monitoring for new subscriptions")
 }
+
+// doRFSubscribe is the main goroutine that monitors Redfish endpoints for
+// subscriptions.  The polling loop runs every 5 seconds by default.  During
+// each polling loop it looks at the cached Redfish endpoints (which are
+// refreshed every 30 seconds).  If a subscription for an endpoint is
+// missing or if it is marked as RFSUBSTATUS_ERROR, it signals the
+// rfSubscribe() goroutine to create it. Otherwise, if 5*20=100 seconds has
+// passed since the last verification, it signals the rfVerifySub()
+// goroutine to make a Redfish call to the BMC to verify that the
+// subscription is still in place and is still valid.
 
 func doRFSubscribe() {
 	endpoints := make(map[string]hmcollector.RFSub)
@@ -570,6 +599,7 @@ func doRFSubscribe() {
 	defer close(verifyRFSubscriptions)
 	defer WaitGroup.Done()
 
+	// Start the goroutines responsible for creating and verifying subscriptions
 	go rfSubscribe(pendingRFSubscriptions)
 	go rfVerifySub(verifyRFSubscriptions)
 
@@ -584,7 +614,8 @@ func doRFSubscribe() {
 		subCheckCnt++
 		logger.Debug("doRFSubscribe: Running new Redfish endpoint scan.", zap.Int("subCheckCnt", subCheckCnt))
 
-		// Determine if any new endpoints have been added.
+		// Grab a snapshot of the current endpoints so that it doesn't change
+		// out from under us while we're processing them
 		hsmEndpointsCache := map[string]*rf.RedfishEPDescription{}
 		HSMEndpointsLock.Lock()
 		for id, ep := range HSMEndpoints {
@@ -592,6 +623,7 @@ func doRFSubscribe() {
 		}
 		HSMEndpointsLock.Unlock()
 
+		// Loop through the endpoints, checking their subscriptions
 		for _, newEndpoint := range hsmEndpointsCache {
 			if xnametypes.GetHMSType(newEndpoint.ID) == xnametypes.CabinetPDUController &&
 				!strings.Contains(newEndpoint.FQDN, "rts") {
@@ -602,10 +634,18 @@ func doRFSubscribe() {
 				continue
 			}
 			if endpoint, ok := endpoints[newEndpoint.ID]; !ok || *endpoint.Status == hmcollector.RFSUBSTATUS_ERROR {
-				// New endpoint found. Add it to our list and queue it for subscribing.
+				// Either a new endpoint was found, or an existing endpoint
+				// was marked with RFSUBSTATUS_ERROR. Add it to our list (or
+				// overwrite it if it was already there) and queue it for
+				// subscribing.
 
-				logger.Info("doRFSubscribe: Found new endpoint - Queueing for subscribing",
-							zap.Any("xname", newEndpoint.ID))
+				if !ok {
+					logger.Info("doRFSubscribe: Found new endpoint - Queueing for subscribing",
+								zap.Any("xname", newEndpoint.ID))
+				} else {
+					logger.Info("doRFSubscribe: Found existing endpoint set to RFSUBSTATUS_ERROR - Queueing for re-subscribing",
+								zap.Any("xname", newEndpoint.ID))
+				}
 
 				endpointStatus := new(hmcollector.RFSubStatus)
 				*endpointStatus = hmcollector.RFSUBSTATUS_PENDING
@@ -617,9 +657,10 @@ func doRFSubscribe() {
 
 				pendingRFSubscriptions <- endpoints[newEndpoint.ID]
 			} else if subCheckCnt%subCheckFreq == 0 {
-				// Endpoint has a subscription, check that sub is still there and correct.
-				// NOTE: Don't need to do this at the same frequency as picking up new additions so as to not
-				// hammer the endpoint.
+				// Endpoint has a subscription, check that sub is still there
+				// and correct. This is done every 5*20=100 seconds (by
+				// default) as we don't need to do it at the same frequency
+				// as picking up new additions so as to not hammer the endpoint.
 
 				logger.Debug("doRFSubscribe: Queueing existing endpoint for subscription verification",
 							 zap.String("xname", newEndpoint.ID))
