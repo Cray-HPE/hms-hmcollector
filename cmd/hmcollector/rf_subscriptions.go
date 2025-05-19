@@ -480,7 +480,7 @@ logger.Debug("JW_DEBUG", zap.String("rfType", fmt.Sprintf("%v", rfType)), zap.St
 				if rfType != OpenBmcRfType {
 					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
 				} else {
-logger.Debug("JW_DEBUG: matched OpenBmcRfType", zap.String("xname", sub.Endpoint.ID))
+logger.Debug("JW_DEBUG: matched OpenBmcRfType", zap.String("xname", sub.Endpoint.ID), zap.String("registryPrefixGroups", fmt.Sprintf("%v", registryPrefixGroups)))
 }
 			}
 
@@ -514,6 +514,7 @@ logger.Debug("JW_DEBUG: matched OpenBmcRfType", zap.String("xname", sub.Endpoint
 
 			// Set up a subscription for the required registry prefix groups.
 			for _, registryPrefixGroup := range registryPrefixGroups {
+logger.Debug("JW_DEBUG: loop", zap.String("xname", sub.Endpoint.ID), zap.String("registryPrefixGroup", fmt.Sprintf("%v", registryPrefixGroup)))
 				// Check the endpoint to see if we are already subscribed.
 				isDup, err := isDupRFSubscription(sub.Endpoint, registryPrefixGroup)
 				if err != nil {
