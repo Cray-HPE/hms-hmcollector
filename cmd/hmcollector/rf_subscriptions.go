@@ -472,12 +472,16 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 
 			// Set up the registry prefix groups
 			registryPrefixGroups := [][]string{nil}
+logger.Debug("JW_DEBUG", zap.String("rfStreamingEnabled", fmt.Sprintf("%v", *rfStreamingEnabled)), zap.String(xname), sub.Endpoint.ID))
 			if *rfStreamingEnabled {
 				// Only create the streaming subscription if enabled.
 				rfType := GetRedfishType(sub.Endpoint)
+logger.Debug("JW_DEBUG", zap.String("rfType", rfType), zap.String("xname", sub.Endpoint.ID))
 				if rfType != OpenBmcRfType {
 					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
-				}
+				} else {
+logger.Debug("JW_DEBUG: matched OpenBmcRfType", zap.String("xname", sub.Endpoint.ID))
+}
 			}
 
 			// Prune any old subscriptions if no longer valid for this endpoint
