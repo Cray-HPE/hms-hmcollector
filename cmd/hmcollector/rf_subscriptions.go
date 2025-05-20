@@ -481,8 +481,8 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				// on a component that doesn't support it, the POST will simply fail. The proper thing to do
 				// would be to never attempt creating streaming telemetry subscriptions in the first place for
 				// these component types... However, we've been doing it this way for many years. Making this
-				// change now would require a bit of code churn in rfSubscribe() which incurs risk for breaking
-				// something else. So, for now, we will leave it as is.
+				// change now would require a bit of code churn, which incurs risk for breaking something else.
+				// So, for now, we will leave it as is.
 				//
 				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
 			}
