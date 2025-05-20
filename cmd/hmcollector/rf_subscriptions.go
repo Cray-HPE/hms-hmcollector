@@ -474,8 +474,7 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 			registryPrefixGroups := [][]string{nil}
 			if *rfStreamingEnabled {
 				// Only create the streaming subscription if enabled.
-				rfType := GetRedfishType(sub.Endpoint)
-				if rfType != OpenBmcRfType {
+				if ! checkOpenBmc(sub.Endpoint) {
 					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
 				}
 			}
@@ -558,18 +557,14 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 
 					// Make sure the list of all unique registry prefixes is kept up to date.
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
+					*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 				} else {
 					logger.Error("rfSubscribe: Redfish subscription not created",
 								 zap.String("xname", sub.Endpoint.ID),
 								 zap.Any("registryPrefix", registryPrefixGroup))
+					*sub.Status = hmcollector.RFSUBSTATUS_ERROR
 				}
 			}
-
-			//if *rfStreamingEnabled && rfType == OpenBmcRfType {
-				// tbd
-			//}
-
-			*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 		}(sub)
 	}
 
