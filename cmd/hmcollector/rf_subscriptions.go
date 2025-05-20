@@ -474,9 +474,9 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 			registryPrefixGroups := [][]string{nil}
 			if *rfStreamingEnabled {
 				// Only create the streaming subscription if enabled.
-				if ! checkOpenBmc(sub.Endpoint) {
+				//if ! checkOpenBmc(sub.Endpoint) {
 					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
-				}
+				//}
 			}
 
 			// Prune any old subscriptions if no longer valid for this endpoint
@@ -507,10 +507,8 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				}
 			}
 
-logger.Error("rfSubscribe: size of registryPrefixGroups", zap.String("xname", sub.Endpoint.ID), zap.Int("size", len(registryPrefixGroups)))
 			// Set up a subscription for the required registry prefix groups.
 			for _, registryPrefixGroup := range registryPrefixGroups {
-logger.Error("rfSubscribe: JW_DEBUG", zap.String("xname", sub.Endpoint.ID), zap.Strings("registryPrefixGroup", registryPrefixGroup))
 				// Check the endpoint to see if we are already subscribed.
 				isDup, err := isDupRFSubscription(sub.Endpoint, registryPrefixGroup)
 				if err != nil {
