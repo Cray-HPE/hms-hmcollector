@@ -283,7 +283,7 @@ func isDupRFSubscription(endpoint *rf.RedfishEPDescription, registryPrefixes []s
 			if match {
 				// Fix context if it does not match.
 				if eventSub.Context != endpoint.ID {
-					logger.Warn("Existing endpoint subscription has context mismatch, attempting to fix.",
+					logger.Warn("isDupRFSubscription: Existing endpoint subscription has context mismatch, attempting to fix.",
 						zap.String("xname", endpoint.ID),
 						zap.Strings("registryPrefixes", registryPrefixes),
 						zap.Any("incorrectContext", eventSub.Context))
@@ -328,18 +328,18 @@ func fixSubscriptionMismatch(endpoint *rf.RedfishEPDescription, sub hmcollector.
 	if patchErr != nil {
 		patchSucceeded = false
 
-		endpointLogger.Warn("Subscription context PATCH failed...attempting to delete subscription.",
+		endpointLogger.Warn("fixSubscriptionMismatch: Subscription context PATCH failed...attempting to delete subscription.",
 			zap.Error(patchErr))
 
 		deleteRetBytes, _, deleteErr := doHTTPAction(endpoint, http.MethodDelete, fullURL, nil)
 		if deleteErr != nil {
-			endpointLogger.Error("Failed to delete subscription!", zap.Error(deleteErr))
+			endpointLogger.Error("fixSubscriptionMismatch: Failed to delete subscription!", zap.Error(deleteErr))
 		} else {
-			endpointLogger.Info("Deleted subscription.",
+			endpointLogger.Info("fixSubscriptionMismatch: Deleted subscription.",
 				zap.String("string(deleteRetBytes)", string(deleteRetBytes)))
 		}
 	} else {
-		logger.Info("Successfully PATCHed subscription context.",
+		logger.Info("fixSubscriptionMismatch: Successfully PATCHed subscription context.",
 			zap.String("string(patchRetBytes)", string(patchRetBytes)))
 	}
 
@@ -359,22 +359,27 @@ func doGetEventTypes(endpoint *rf.RedfishEPDescription) ([]string, error) {
 		return nil, err
 	}
 
-	logger.Debug("Got event types from endpoint.",
+	logger.Debug("doGetEventTypes: Got event types from endpoint.",
 		zap.Any("xname", endpoint.ID),
 		zap.Strings("EventTypesForSubscription", evService.EventTypesForSubscription))
 
 	return evService.EventTypesForSubscription, err
 }
 
-// Verify the subscriptions are still in place
+// rfVerifySub is a goroutine that verifies subscriptions are still in place
+
 func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
-	// This endpoint should already have the subscription present, but verify that it is still there.
+	logger.Info("rfVerifySub: Beginning subscription validation monitoring")
+
 	var verifyWaitGroup sync.WaitGroup
 
 	for sub := range verifyRFSubscriptions {
 		// If the subscription is still in the process of being set up or is already in an error state then don't
 		// check it yet.
 		if *sub.Status != hmcollector.RFSUBSTATUS_COMPLETE {
+			logger.Debug("rfVerifySub: Skipping validation of endpoint with subscription in progress or in error state",
+					zap.String("xname", sub.Endpoint.ID),
+					zap.String("status", fmt.Sprintf("%v", *sub.Status)))
 			continue
 		}
 
@@ -389,23 +394,30 @@ func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 				// Check the endpoint to see if we are already subscribed.
 				isDup, err := isDupRFSubscription(inSub.Endpoint, registryPrefixGroup)
 				if err != nil {
-					logger.Error("Unable to check if duplicate subscription!", zap.Error(err))
+					logger.Error("rfVerifySub: Unable to check if duplicate subscription!",
+						zap.String("xname", inSub.Endpoint.ID), zap.Error(err))
+
 					*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
+
 					continue
 				}
 				if !isDup {
 					// The subscription should be present but isn't - reset the status so the next time through it
 					// will be reset through the normal mechanism.
-					logger.Warn("Endpoint missing subscription...resetting status to re-attempt add.",
+					logger.Warn("rfVerifySub: Endpoint missing subscription...resetting status to re-attempt add.",
 						zap.String("xname", inSub.Endpoint.ID),
 						zap.Strings("registryPrefixGroup", registryPrefixGroup))
+
 					*inSub.Status = hmcollector.RFSUBSTATUS_ERROR
+
 					continue
 				}
 			}
 		}(sub)
 	}
 	verifyWaitGroup.Wait()
+
+	logger.Info("rfVerifySub: Done monitoring of subscription verifications")
 }
 
 func appendUniqueRegPrefix(inPrefix []string, pg *[][]string) {
@@ -441,8 +453,14 @@ func appendUniqueRegPrefix(inPrefix []string, pg *[][]string) {
 	*pg = append(*pg, inPrefix)
 }
 
+// rfSubscribe is a goroutine that runs whenever signalled by the main
+// doRFSubscribe goroutine. This signalling is done if the endpoint is
+// new, or if the endpoint is marked with RFSUBSTATUS_ERROR.
+
 func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 	var subscriptionWaitGroup sync.WaitGroup
+
+	logger.Info("rfSubscribe: Beginning monitoring of new subscriptions")
 
 	for sub := range pendingRFSubscriptions {
 		subscriptionWaitGroup.Add(1)
@@ -456,27 +474,41 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 			registryPrefixGroups := [][]string{nil}
 			if *rfStreamingEnabled {
 				// Only create the streaming subscription if enabled.
-				rfType := GetRedfishType(sub.Endpoint)
-				if rfType != OpenBmcRfType {
-					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
-				}
+				//
+				// NOTE: There are many component types that come through here that do not support streaming
+				// telemetry (eg. River NodeBMC's, MgmtSwitch's, MgmtHLSwitch's, some CabinetPDUController's,
+				// etc.).  When we attempt to create a streaming telemetry subscription (the 2nd subscription)
+				// on a component that doesn't support it, the POST will simply fail. The proper thing to do
+				// would be to never attempt creating streaming telemetry subscriptions in the first place for
+				// these component types... However, we've been doing it this way for many years. Making this
+				// change now would require a bit of code churn, which incurs risk for breaking something else.
+				// So, for now, we will leave it as is.
+				//
+				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
 			}
 
+			// Prune any old subscriptions if no longer valid for this endpoint
 			if *pruneOldSubscriptions {
+				// Retrieve the list of subscriptions directly from the BMC
 				subscriptions, err := getSubscriptions(sub.Endpoint)
 				if err != nil {
-					logger.Error("Unable to get subscriptions!", zap.String("xname", sub.Endpoint.ID), zap.Error(err))
+					logger.Error("rfSubscribe: Unable to get list of subscriptions",
+								 zap.String("xname", sub.Endpoint.ID), zap.Error(err))
 				} else {
+					// Process each subscrition in the list
 					for _, member := range subscriptions.Members {
+						// Get the subscription details directly from the BMC
 						eventSub, err := getSubscription(sub.Endpoint, member.OId)
 						if err != nil {
-							logger.Error("Unable to get subscription!",
+							logger.Error("rfSubscribe: Unable to get subscription",
 								zap.String("xname", sub.Endpoint.ID),
 								zap.String("id", member.OId),
 								zap.Error(err))
 							continue
 						}
+						// If the subscription is for the wrong xname, delete it.
 						if isSubscriptionForWrongXname(sub.Endpoint.ID, eventSub) {
+							// This was likely due to moved hardware so delete it
 							deleteSubscriptionForWrongXname(sub.Endpoint, member.OId, eventSub)
 						}
 					}
@@ -488,15 +520,19 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				// Check the endpoint to see if we are already subscribed.
 				isDup, err := isDupRFSubscription(sub.Endpoint, registryPrefixGroup)
 				if err != nil {
-					logger.Error("Unable to check if duplicate subscription!", zap.Error(err))
+					logger.Error("rfSubscribe: Unable to check if duplicate subscription!",
+								 zap.String("xname", sub.Endpoint.ID),
+								 zap.Error(err))
+
 					*sub.Status = hmcollector.RFSUBSTATUS_ERROR
 					continue
 				}
+				// If already subscribed, don't add a second one but log it.
 				if isDup {
-					// Already present so don't add a second one but log it.
-					logger.Debug("Endpoint already contains subscription.",
-						zap.Any("endpoint", sub.Endpoint),
-						zap.Strings("registryPrefixGroup", registryPrefixGroup))
+					logger.Debug("rfSubscribe: Endpoint already contains subscription.",
+								 zap.Any("endpoint", sub.Endpoint),
+								 zap.Strings("registryPrefixGroup", registryPrefixGroup))
+
 					*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
 					continue
@@ -504,21 +540,35 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				// Get the event types that are available.
 				evTypes, err := doGetEventTypes(sub.Endpoint)
 				if err != nil {
-					logger.Error("Unable to check if event types are available!", zap.Error(err))
+					logger.Error("rfSubscribe: Unable to check if event types are available!",
+								 zap.String("xname", sub.Endpoint.ID),
+								 zap.Error(err))
+
 					*sub.Status = hmcollector.RFSUBSTATUS_ERROR
 					continue
 				}
+				// Do the subscription.
 				subscribed, err := postRFSubscription(sub.Endpoint, evTypes, registryPrefixGroup)
 				if err != nil {
-					logger.Error("Unable to post Redfish subscription!", zap.Error(err))
+					logger.Error("rfSubscribe: Unable to post Redfish subscription!",
+								 zap.String("xname", sub.Endpoint.ID),
+								 zap.Error(err))
+
 					*sub.Status = hmcollector.RFSUBSTATUS_ERROR
 					continue
 				}
-
+				// Log subscription and update registry prefixes.
 				if subscribed {
-					logger.Info("Redfish subscription created", zap.String("ID", sub.Endpoint.ID), zap.Any("registryPrefix", registryPrefixGroup))
+					logger.Info("rfSubscribe: Redfish subscription created",
+								 zap.String("xname", sub.Endpoint.ID),
+								 zap.Any("registryPrefix", registryPrefixGroup))
+
 					// Make sure the list of all unique registry prefixes is kept up to date.
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
+				} else {
+					logger.Error("rfSubscribe: Redfish subscription not created",
+								 zap.String("xname", sub.Endpoint.ID),
+								 zap.Any("registryPrefix", registryPrefixGroup))
 				}
 			}
 
@@ -527,7 +577,19 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 	}
 
 	subscriptionWaitGroup.Wait()
+
+	logger.Info("rfSubscribe: Stopping monitoring for new subscriptions")
 }
+
+// doRFSubscribe is the main goroutine that monitors Redfish endpoints for
+// subscriptions.  The polling loop runs every 5 seconds by default.  During
+// each polling loop it looks at the cached Redfish endpoints (which are
+// refreshed every 30 seconds).  If a subscription for an endpoint is
+// missing or if it is marked as RFSUBSTATUS_ERROR, it signals the
+// rfSubscribe() goroutine to create it. Otherwise, if 5*20=100 seconds has
+// passed since the last verification, it signals the rfVerifySub()
+// goroutine to make a Redfish call to the BMC to verify that the
+// subscription is still in place and is still valid.
 
 func doRFSubscribe() {
 	endpoints := make(map[string]hmcollector.RFSub)
@@ -540,6 +602,7 @@ func doRFSubscribe() {
 	defer close(verifyRFSubscriptions)
 	defer WaitGroup.Done()
 
+	// Start the goroutines responsible for creating and verifying subscriptions
 	go rfSubscribe(pendingRFSubscriptions)
 	go rfVerifySub(verifyRFSubscriptions)
 
@@ -547,12 +610,15 @@ func doRFSubscribe() {
 	subCheckCnt := 0
 	const subCheckFreq = 20
 
-	logger.Info("Checking for new Redfish endpoints.", zap.Int("hsmRefreshInterval", *hsmRefreshInterval))
+	logger.Info("doRFSubscribe: Beginning monitoring of Redfish endpoint subscriptions",
+				zap.Int("EndpointRefreshInterval", EndpointRefreshInterval))
+
 	for Running {
 		subCheckCnt++
-		logger.Debug("Running new Redfish endpoint scan.", zap.Int("subCheckCnt", subCheckCnt))
+		logger.Debug("doRFSubscribe: Running new Redfish endpoint scan.", zap.Int("subCheckCnt", subCheckCnt))
 
-		// Determine if any new endpoints have been added.
+		// Grab a snapshot of the current endpoints so that it doesn't change
+		// out from under us while we're processing them
 		hsmEndpointsCache := map[string]*rf.RedfishEPDescription{}
 		HSMEndpointsLock.Lock()
 		for id, ep := range HSMEndpoints {
@@ -560,16 +626,29 @@ func doRFSubscribe() {
 		}
 		HSMEndpointsLock.Unlock()
 
+		// Loop through the endpoints, checking their subscriptions
 		for _, newEndpoint := range hsmEndpointsCache {
-			// HPE PDUs don't support subscriptions properly. To prevent tipping it over,
-			// don't try subscribe to them.
 			if xnametypes.GetHMSType(newEndpoint.ID) == xnametypes.CabinetPDUController &&
 				!strings.Contains(newEndpoint.FQDN, "rts") {
+
+				// HPE PDUs don't support subscriptions properly. To prevent
+				// tipping it over, don't try subscribe to them.
+
 				continue
 			}
 			if endpoint, ok := endpoints[newEndpoint.ID]; !ok || *endpoint.Status == hmcollector.RFSUBSTATUS_ERROR {
-				// New endpoint found. Add it to our list and queue it for subscribing.
-				logger.Info("Found new endpoint.", zap.Any("xname", newEndpoint.ID))
+				// Either a new endpoint was found, or an existing endpoint
+				// was marked with RFSUBSTATUS_ERROR. Add it to our list (or
+				// overwrite it if it was already there) and queue it for
+				// subscribing.
+
+				if !ok {
+					logger.Info("doRFSubscribe: Found new endpoint - Queueing for subscribing",
+								zap.Any("xname", newEndpoint.ID))
+				} else {
+					logger.Info("doRFSubscribe: Found existing endpoint set to RFSUBSTATUS_ERROR - Queueing for re-subscribing",
+								zap.Any("xname", newEndpoint.ID))
+				}
 
 				endpointStatus := new(hmcollector.RFSubStatus)
 				*endpointStatus = hmcollector.RFSUBSTATUS_PENDING
@@ -578,15 +657,21 @@ func doRFSubscribe() {
 					Status:       endpointStatus,
 					PrefixGroups: &[][]string{},
 				}
+
 				pendingRFSubscriptions <- endpoints[newEndpoint.ID]
 			} else if subCheckCnt%subCheckFreq == 0 {
+				// Endpoint has a subscription, check that sub is still there
+				// and correct. This is done every 5*20=100 seconds (by
+				// default) as we don't need to do it at the same frequency
+				// as picking up new additions so as to not hammer the endpoint.
+
+				logger.Debug("doRFSubscribe: Queueing existing endpoint for subscription verification",
+							 zap.String("xname", newEndpoint.ID))
+
 				currentEndpoint := endpoints[newEndpoint.ID]
 				currentEndpoint.Endpoint = newEndpoint
 				endpoints[newEndpoint.ID] = currentEndpoint
-				// Endpoint has a subscription, check that sub is still there and correct.
-				// NOTE: Don't need to do this at the same frequency as picking up new additions so as to not
-				// hammer the endpoint.
-				logger.Debug("Verifying subscriptions for endpoint.", zap.String("xname", newEndpoint.ID))
+
 				verifyRFSubscriptions <- endpoints[newEndpoint.ID]
 			}
 		}
@@ -600,5 +685,5 @@ func doRFSubscribe() {
 		}
 	}
 
-	logger.Info("RF subscription routine shutdown.")
+	logger.Info("doRFSubscribe: Stopping monitoring of Redfish endpoint subscriptions.")
 }

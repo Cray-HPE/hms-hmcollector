@@ -87,7 +87,7 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 					// Add a wait here to space them out a bit.
 					time.Sleep(time.Second * 1)
 				}
-				logger.Debug("collectData(): ", zap.String("Endpoint URL", fullURL))
+				logger.Debug("collectData(): Querying", zap.String("Endpoint URL", fullURL))
 				payloadBytes, statusCode, err := doHTTPAction(endpoint.Endpoint, http.MethodGet, fullURL, nil)
 
 				if err != nil {
@@ -107,7 +107,9 @@ func collectData(pendingEndpoints <-chan EndpointWithCollector, jsonPayloads cha
 
 				newEvents := river_collector.GetEventsForPayload(endpoint.RiverCollector, payloadBytes, endpoint.Endpoint,
 					telemetryType)
-				logger.Debug("collectData(): ", zap.Int("num events", len(newEvents)))
+				logger.Debug("collectData(): Processing response",
+						zap.String("Endpoint URL", fullURL),
+						zap.Int("num events", len(newEvents)))
 
 				for _, event := range newEvents {
 					var finalEvents hmcollector.Events
