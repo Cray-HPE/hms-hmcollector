@@ -53,10 +53,6 @@ func checkOpenBmc(endpoint *rf.RedfishEPDescription) bool {
 	return rfType == OpenBmcRfType
 }
 
-func checkCray(endpoint *rf.RedfishEPDescription) bool {
-	rfType := GetRedfishType(endpoint)
-	return rfType == CrayRfType
-}
 func getDestination(endpoint *rf.RedfishEPDescription) string {
 	destination, err := url.Parse(*restURL)
 	if err != nil {
@@ -370,7 +366,7 @@ func doGetEventTypes(endpoint *rf.RedfishEPDescription) ([]string, error) {
 	return evService.EventTypesForSubscription, err
 }
 
-// rfSubscribe is a goroutine that verifies subscriptions are still in place
+// rfVerifySub is a goroutine that verifies subscriptions are still in place
 
 func rfVerifySub(verifyRFSubscriptions <-chan hmcollector.RFSub) {
 	logger.Info("rfVerifySub: Beginning subscription validation monitoring")
@@ -457,7 +453,7 @@ func appendUniqueRegPrefix(inPrefix []string, pg *[][]string) {
 	*pg = append(*pg, inPrefix)
 }
 
-// rfSubscribe is a goroutine that runs whehever signalled by the main
+// rfSubscribe is a goroutine that runs whenever signalled by the main
 // doRFSubscribe goroutine. This signalling is done if the endpoint is
 // new, or if the endpoint is marked with RFSUBSTATUS_ERROR.
 
@@ -477,11 +473,19 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 			// Set up the registry prefix groups
 			registryPrefixGroups := [][]string{nil}
 			if *rfStreamingEnabled {
-				// Only create the streaming subscription if enabled and if
-				// the hardware supports it (Cray only).
-				if checkCray(sub.Endpoint) {
-					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
-				}
+				// Only create the streaming subscription if enabled.
+				//
+				// NOTE: There are many component types that come through here that do not support streaming
+				// telemetry (eg. River NodeBMC's, MgmtSwitch's, MgmtHLSwitch's, some CabinetPDUController's,
+				// etc.).  When the second streaming telemetry subscription is attempted to be created on a
+				// component that doesn't support it, it will never get created because the POST will fail.
+				// The right thing to do would be to not attempt to create the streaming telemetry subscription
+				// for these component types... However, we've been doing this for many years and as of now
+				// (mid 2025) we are moving into a dormant EOL phase of the product.  Making this change would
+				// require a bit of code churn in rfSubscribe() which incurs risk for breaking something else.
+				// So, for now, we will leave it as is.
+				//
+				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
 			}
 
 			// Prune any old subscriptions if no longer valid for this endpoint
@@ -562,14 +566,14 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 
 					// Make sure the list of all unique registry prefixes is kept up to date.
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
-					*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 				} else {
 					logger.Error("rfSubscribe: Redfish subscription not created",
 								 zap.String("xname", sub.Endpoint.ID),
 								 zap.Any("registryPrefix", registryPrefixGroup))
-					*sub.Status = hmcollector.RFSUBSTATUS_ERROR
 				}
 			}
+
+			*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 		}(sub)
 	}
 

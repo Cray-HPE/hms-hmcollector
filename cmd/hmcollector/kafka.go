@@ -70,7 +70,7 @@ func writeToKafka(topic, payload string, messageID *string) {
 		}
 
 		if _, hasTopic := thisBroker.TopicsToPublish[topic]; hasTopic {
-			//brokerLogger.Debug("Sent message.", zap.String("msg.Value", string(msg.Value)))
+			brokerLogger.Debug("Sent message.", zap.String("msg.Value", string(msg.Value)))
 
 			if shouldLogMessage(mId) {
 				brokerLogger.Info("message", zap.String("msg.Value", string(msg.Value)))
@@ -78,13 +78,13 @@ func writeToKafka(topic, payload string, messageID *string) {
 			produceErr := thisBroker.KafkaProducer.Produce(&msg, nil)
 			if produceErr != nil {
 				if shouldLogErrors {
-					//brokerLogger.Error("Failed to produce message!", zap.Error(produceErr))
+					brokerLogger.Error("Failed to produce message!", zap.Error(produceErr))
 				} else {
-					//brokerLogger.Error("Failed to produce message!")
+					brokerLogger.Error("Failed to produce message!")
 				}
 			}
 		} else {
-			//brokerLogger.Debug("Not sending message to broker because topic not in list")
+			brokerLogger.Debug("Not sending message to broker because topic not in list")
 		}
 	}
 
@@ -116,7 +116,7 @@ func handleKafkaEvents(broker *hmcollector.KafkaBroker) {
 					eventLogger.Error("Failed to produce message!")
 				}
 			} else {
-				//eventLogger.Debug("Produced message.")
+				eventLogger.Debug("Produced message.")
 			}
 		}
 	}
