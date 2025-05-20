@@ -123,15 +123,15 @@ func parseRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ce := logger.Check(zap.DebugLevel, "Got request."); ce != nil {
-		// If debug-level log output isn't enabled or if zap's sampling would have
-		// dropped this log entry, we don't allocate the slice that holds these
-		// fields.
-		ce.Write(
-			zap.String("URL request path", r.URL.Path),
-			zap.String("string(bodyBytes)", string(bodyBytes)),
-		)
-	}
+//	if ce := logger.Check(zap.DebugLevel, "Got request."); ce != nil {
+//		// If debug-level log output isn't enabled or if zap's sampling would have
+//		// dropped this log entry, we don't allocate the slice that holds these
+//		// fields.
+//		ce.Write(
+//			zap.String("URL request path", r.URL.Path),
+//			zap.String("string(bodyBytes)", string(bodyBytes)),
+//		)
+//	}
 
 	// Need to interrogate this payload to figure out what topic it needs to go to.
 	// MessageId field is always Registry.Entry, for HMS the Entry is what determines the table.
