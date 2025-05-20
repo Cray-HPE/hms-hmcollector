@@ -507,8 +507,10 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				}
 			}
 
+logger.Error("rfSubscribe: size of registryPrefixGroups", zap.String("xname", sub.Endpoint.ID), zap.Int("size", len(registryPrefixGroups)))
 			// Set up a subscription for the required registry prefix groups.
 			for _, registryPrefixGroup := range registryPrefixGroups {
+logger.Error("rfSubscribe: JW_DEBUG", zap.String("xname", sub.Endpoint.ID), zap.Strings("registryPrefixGroup", registryPrefixGroup))
 				// Check the endpoint to see if we are already subscribed.
 				isDup, err := isDupRFSubscription(sub.Endpoint, registryPrefixGroup)
 				if err != nil {
@@ -557,14 +559,14 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 
 					// Make sure the list of all unique registry prefixes is kept up to date.
 					appendUniqueRegPrefix(registryPrefixGroup, sub.PrefixGroups)
-					*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 				} else {
 					logger.Error("rfSubscribe: Redfish subscription not created",
 								 zap.String("xname", sub.Endpoint.ID),
 								 zap.Any("registryPrefix", registryPrefixGroup))
-					*sub.Status = hmcollector.RFSUBSTATUS_ERROR
 				}
 			}
+
+			*sub.Status = hmcollector.RFSUBSTATUS_COMPLETE
 		}(sub)
 	}
 
