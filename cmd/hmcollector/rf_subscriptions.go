@@ -642,6 +642,9 @@ func doRFSubscribe() {
 				// overwrite it if it was already there) and queue it for
 				// subscribing.
 
+logger.Info("doRFSubscribe: JW_DEBUG", zap.Any("xname", newEndpoint.ID),
+					zap.Bool("ok", ok),
+					zap.Any("endpointStatus", endpoint.Status))
 				if !ok {
 					logger.Info("doRFSubscribe: Found new endpoint - Queueing for subscribing",
 								zap.Any("xname", newEndpoint.ID))
