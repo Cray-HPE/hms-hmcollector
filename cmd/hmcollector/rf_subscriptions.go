@@ -484,7 +484,11 @@ func rfSubscribe(pendingRFSubscriptions <-chan hmcollector.RFSub) {
 				// change now would require a bit of code churn, which incurs risk for breaking something else.
 				// So, for now, we will leave it as is.
 				//
-				registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
+				//registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
+				rfType := GetRedfishType(sub.Endpoint)
+				if rfType != OpenBmcRfType {
+					registryPrefixGroups = append(registryPrefixGroups, []string{"CrayTelemetry"})
+				}
 			}
 
 			// Prune any old subscriptions if no longer valid for this endpoint
