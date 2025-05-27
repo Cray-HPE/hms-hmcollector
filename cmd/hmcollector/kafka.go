@@ -70,7 +70,7 @@ func writeToKafka(topic, payload string, messageID *string) {
 		}
 
 		if _, hasTopic := thisBroker.TopicsToPublish[topic]; hasTopic {
-//			brokerLogger.Debug("Sent message.", zap.String("msg.Value", string(msg.Value)))
+			brokerLogger.Debug("Sent message.", zap.String("msg.Value", string(msg.Value)))
 
 			if shouldLogMessage(mId) {
 				brokerLogger.Info("message", zap.String("msg.Value", string(msg.Value)))
@@ -84,7 +84,7 @@ func writeToKafka(topic, payload string, messageID *string) {
 				}
 			}
 		} else {
-//			brokerLogger.Debug("Not sending message to broker because topic not in list")
+			brokerLogger.Debug("Not sending message to broker because topic not in list")
 		}
 	}
 
@@ -116,7 +116,7 @@ func handleKafkaEvents(broker *hmcollector.KafkaBroker) {
 					eventLogger.Error("Failed to produce message!")
 				}
 			} else {
-//				eventLogger.Debug("Produced message.")
+				eventLogger.Debug("Produced message.")
 			}
 		}
 	}
@@ -213,7 +213,7 @@ func monitorSMA() {
 		if err != nil {
 			logger.Error("Error from SMA ping:", zap.Error(err))
 		} else {
-//			logger.Debug("SMA Ping result:", zap.String("rslt", string(outp)), zap.String("cmd", cmd))
+			logger.Debug("SMA Ping result:", zap.String("rslt", string(outp)), zap.String("cmd", cmd))
 			if strings.Contains(string(outp), "pingtrue") {
 				smaOK = true
 			} else {
