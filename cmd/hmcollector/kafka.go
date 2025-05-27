@@ -73,7 +73,7 @@ func writeToKafka(topic, payload string, messageID *string) {
 //			brokerLogger.Debug("Sent message.", zap.String("msg.Value", string(msg.Value)))
 
 			if shouldLogMessage(mId) {
-//				brokerLogger.Info("message", zap.String("msg.Value", string(msg.Value)))
+				brokerLogger.Info("message", zap.String("msg.Value", string(msg.Value)))
 			}
 			produceErr := thisBroker.KafkaProducer.Produce(&msg, nil)
 			if produceErr != nil {
