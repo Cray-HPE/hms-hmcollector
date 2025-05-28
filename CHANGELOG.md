@@ -24,6 +24,14 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.39.0] - 2025-05-28
+
+### Fixed
+
+- Fixed lost subscription bug when Paradise BMCs reboot
+- Updated image and module dependencies
+- Internal tracking ticket: CASMHMS-6257
+
 ## [2.38.0] - 2025-04-18
 
 ### Update
