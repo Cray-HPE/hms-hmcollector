@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.40.0] - 2025-11-20
+
+### Security
+
+- Update alpine image to 3.22
+- Internal tracking ticket: CASMHMS-6610
+
 ## [2.39.0] - 2025-05-28
 
 ### Fixed

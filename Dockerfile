@@ -55,7 +55,7 @@ RUN set -ex \
 
 ## Final Stage ###
 
-FROM artifactory.algol60.net/docker.io/alpine:3.21
+FROM artifactory.algol60.net/docker.io/alpine:3.22
 LABEL maintainer="Hewlett Packard Enterprise"
 EXPOSE 80
 
