@@ -52,7 +52,7 @@ RUN set -ex \
     && go build -v -o /usr/local/bin/kafka_tool github.com/Cray-HPE/hms-hmcollector/cmd/kafka_tool
 
 ### Final Stage ###
-FROM artifactory.algol60.net/docker.io/alpine:3.21
+FROM artifactory.algol60.net/docker.io/alpine:3.22
 
 STOPSIGNAL SIGKILL
 
