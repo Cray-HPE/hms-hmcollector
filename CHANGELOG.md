@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.41.0] - 2026-06-02
+
+### Fixed
+
+- Fix SMAMonitor check logic from using ICMP to TCP
+- Internal tracking ticket: CASMTRIAGE-9186
+
 ## [2.40.0] - 2025-11-20
 
 ### Security
