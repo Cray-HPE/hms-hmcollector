@@ -206,7 +206,7 @@ func monitorSMA() {
 	}
 
 	for {
-		cmd := fmt.Sprintf("ping -c 1 %s > /dev/null && echo pingtrue || echo pingfalse", smaHost)
+		cmd := fmt.Sprintf("nc -z %s 9092 > /dev/null && echo pingtrue || echo pingfalse", smaHost)
 
 		result := exec.Command("/bin/sh", "-c", cmd)
 		outp, err := result.CombinedOutput()
@@ -219,6 +219,14 @@ func monitorSMA() {
 			} else {
 				smaOK = false
 			}
+
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:9092", smaHost), 2*time.Second)
+		if err != nil {
+			logger.Warn("SMA check using Go routine: Connectivity failed.  Telemetry polling is paused.", zap.Error(err))
+		} else {
+			conn.Close()
+			logger.Warn("SMA check using Go routine: Connectivity OK.  Telemetry polling is running")
+		}
 
 			if first || (smaOK != smaOKPrev) {
 				if smaOK {
