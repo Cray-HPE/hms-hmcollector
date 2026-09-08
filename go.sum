@@ -14,8 +14,8 @@ github.com/Cray-HPE/hms-compcredentials v1.15.0 h1:ao3oWw/+yo9rrRpUOpVfew7kyLhra
 github.com/Cray-HPE/hms-compcredentials v1.15.0/go.mod h1:Qofdt6WFcY97J6V4nGEDfFSxIE9ZZJzoZDsTBfjQ2RY=
 github.com/Cray-HPE/hms-securestorage v1.17.0 h1:9Dr96LITvt9hqs+/CIDFNOauUPSTobU8TC3jEfd8I/A=
 github.com/Cray-HPE/hms-securestorage v1.17.0/go.mod h1:XYnykBCkkdWCLsMNjoMNmYfFn9UDFc02UN16k8ZHktE=
-github.com/Cray-HPE/hms-smd/v2 v2.38.0 h1:+p0G6J/Xmllc6wW8thCC89ncNmP1gyfPyWqRmQsQ9Jo=
-github.com/Cray-HPE/hms-smd/v2 v2.38.0/go.mod h1:Ycj7uV/QQJX1MFlBFLkrHoQrVlL25n2Ol5IBclXz2QY=
+github.com/Cray-HPE/hms-smd/v2 v2.45.0 h1:LM1QkP7D9FYacNAt8FvhQlvIFCjT+OwjahAqsIbeiGQ=
+github.com/Cray-HPE/hms-smd/v2 v2.45.0/go.mod h1:z9iC/pyxXzDlAPMTW3H+KN4zRhuiiu+p/eGJb4t8+as=
 github.com/Cray-HPE/hms-xname v1.4.0 h1:i47YmE8rbSfJ64simKCCC6ZVcGid3rDIX6/jfVbISAM=
 github.com/Cray-HPE/hms-xname v1.4.0/go.mod h1:wH7t1UXYck0VdHSWjrMsxZmaCK5W1lmwgNnsYAFPTus=
 github.com/IBM/sarama v1.45.1 h1:nY30XqYpqyXOXSNoe2XCgjj9jklGM1Ye94ierUb1jQ0=

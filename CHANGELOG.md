@@ -24,6 +24,13 @@ Fixed - for any bug fixes
 Security - in case of vulnerabilities
 -->
 
+## [2.41.0] - 2025-12-04
+
+### Fixed
+
+- Update HMCOLLECTOR to point to latest SMD v2.45.0 image
+- Internal tracking ticket: CASMHMS-6618
+
 ## [2.40.0] - 2025-11-20
 
 ### Security
