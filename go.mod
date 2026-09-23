@@ -7,7 +7,7 @@ require (
 	github.com/Cray-HPE/hms-certs v1.7.1
 	github.com/Cray-HPE/hms-compcredentials v1.15.0
 	github.com/Cray-HPE/hms-securestorage v1.17.0
-	github.com/Cray-HPE/hms-smd/v2 v2.38.0
+	github.com/Cray-HPE/hms-smd/v2 v2.45.0
 	github.com/Cray-HPE/hms-xname v1.4.0
 	github.com/IBM/sarama v1.45.1
 	github.com/confluentinc/confluent-kafka-go/v2 v2.10.0
