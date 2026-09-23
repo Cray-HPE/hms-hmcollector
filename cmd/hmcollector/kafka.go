@@ -220,14 +220,6 @@ func monitorSMA() {
 				smaOK = false
 			}
 
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:9092", smaHost), 2*time.Second)
-		if err != nil {
-			logger.Warn("SMA check using Go routine: Connectivity failed.  Telemetry polling is paused.", zap.Error(err))
-		} else {
-			conn.Close()
-			logger.Warn("SMA check using Go routine: Connectivity OK.  Telemetry polling is running")
-		}
-
 			if first || (smaOK != smaOKPrev) {
 				if smaOK {
 					logger.Warn("SMA check: Connectivity OK.  Telemetry polling is running.")
