@@ -1,6 +1,6 @@
 // MIT License
 //
-// (C) Copyright [2020-2021,2024-2025] Hewlett Packard Enterprise Development LP
+// (C) Copyright [2020-2021,2024-2026] Hewlett Packard Enterprise Development LP
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -206,7 +206,7 @@ func monitorSMA() {
 	}
 
 	for {
-		cmd := fmt.Sprintf("ping -c 1 %s > /dev/null && echo pingtrue || echo pingfalse", smaHost)
+		cmd := fmt.Sprintf("nc -z %s 9092 > /dev/null && echo pingtrue || echo pingfalse", smaHost)
 
 		result := exec.Command("/bin/sh", "-c", cmd)
 		outp, err := result.CombinedOutput()
